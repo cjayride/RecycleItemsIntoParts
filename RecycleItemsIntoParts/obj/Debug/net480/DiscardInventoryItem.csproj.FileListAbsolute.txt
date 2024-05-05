@@ -13,3 +13,12 @@ D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\0Harmony20.d
 D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\BepInEx.Harmony.dll
 D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\HarmonyXInterop.dll
 D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\BepInEx.Harmony.xml
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\bin\Debug\net480\DiscardInventoryItem.dll
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\bin\Debug\net480\DiscardInventoryItem.pdb
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.csproj.AssemblyReference.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.AssemblyInfoInputs.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.AssemblyInfo.cs
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.dll
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\DiscardInventoryItem.pdb

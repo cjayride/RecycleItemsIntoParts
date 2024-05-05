@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.DiscardInventoryItem", "Discard or Recycle Inventory Items", "1.5.1")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.6.0")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -20,8 +20,6 @@ namespace DiscardInventoryItem
         public static ConfigEntry<bool> returnUnknownResources;
         public static ConfigEntry<bool> returnEnchantedResources;
         public static ConfigEntry<float> returnResources;
-        //public static ConfigEntry<int> nexusID;
-
         private static BepInExPlugin context;
         private static Assembly epicLootAssembly;
 
@@ -50,7 +48,6 @@ namespace DiscardInventoryItem
             returnUnknownResources = Config.Bind<bool>("General", "ReturnUnknownResources", true, "Return resources if recipe is unknown");
             returnEnchantedResources = Config.Bind<bool>("General", "ReturnEnchantedResources", true, "Return resources for Epic Loot enchantments");
             returnResources = Config.Bind<float>("General", "ReturnResources", (float)1.0, "Fraction of resources to return (0.0 - 1.0)");
-            //nexusID = Config.Bind<int>("General", "NexusID", 45, "Nexus mod ID for updates");
 
             // added by cjayride
             recycleCoins = Config.Bind<bool>("General", "RecycleCoins", false, "Enable/disable coins on recycling items"); // enchanted items will recycle with coins, in some cases we don't want that because it messes with the economy
@@ -252,27 +249,6 @@ namespace DiscardInventoryItem
                     }
                 }
 
-            }
-        }
-
-        [HarmonyPatch(typeof(Terminal), "InputText")]
-        static class InputText_Patch
-        {
-            static bool Prefix(Terminal __instance)
-            {
-                if (!modEnabled.Value)
-                    return true;
-                string text = __instance.m_input.text;
-                if (text.ToLower().Equals($"{typeof(BepInExPlugin).Namespace.ToLower()} reset"))
-                {
-                    context.Config.Reload();
-                    context.Config.Save();
-
-                    __instance.AddString(text);
-                    __instance.AddString($"{context.Info.Metadata.Name} config reloaded");
-                    return false;
-                }
-                return true;
             }
         }
     }

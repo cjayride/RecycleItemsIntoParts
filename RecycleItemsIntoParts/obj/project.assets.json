@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\valheim-mods\\MistlandsMods\\DiscardInventoryItem\\DiscardInventoryItem.csproj",
-      "projectName": "DiscardInventoryItem",
-      "projectPath": "D:\\valheim-mods\\MistlandsMods\\DiscardInventoryItem\\DiscardInventoryItem.csproj",
+      "projectUniqueName": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj",
+      "projectName": "RecycleItemsIntoParts",
+      "projectPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj",
       "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
-      "outputPath": "D:\\valheim-mods\\MistlandsMods\\DiscardInventoryItem\\obj\\",
+      "outputPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Administrator\\AppData\\Roaming\\NuGet\\NuGet.Config",

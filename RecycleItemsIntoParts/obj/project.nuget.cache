@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QTKkjzN5NbmxDE0kjOYnDAvPNOjzZUysfgiC4gfwtcgyshc1q9k1UCipRmy/EsucWK1UpeZ20u5d00RorpY5pQ==",
+  "dgSpecHash": "70fFkDlHBqMVoE1EZqYdqa8eRnqGly8DLFFXD3Oex05E7lQUWyOpIZLWvq3V/nwm0UOBlE3Gv7sXS4VMjeaaDQ==",
   "success": true,
-  "projectFilePath": "D:\\valheim-mods\\MistlandsMods\\DiscardInventoryItem\\DiscardInventoryItem.csproj",
+  "projectFilePath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

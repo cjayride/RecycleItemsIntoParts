@@ -1,0 +1,9 @@
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\bin\Debug\net480\RecycleItemsIntoParts.dll
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\bin\Debug\net480\RecycleItemsIntoParts.pdb
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.csproj.AssemblyReference.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.AssemblyInfoInputs.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.AssemblyInfo.cs
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.csproj.CoreCompileInputs.cache
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.dll
+C:\Users\Administrator\Documents\Valheim-Modding\RecycleItemsIntoParts-main\RecycleItemsIntoParts\obj\Debug\net480\RecycleItemsIntoParts.pdb

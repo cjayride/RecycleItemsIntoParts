@@ -1,15 +1,15 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\DiscardInventoryItem.csproj": {}
+    "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\DiscardInventoryItem.csproj": {
+    "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\DiscardInventoryItem.csproj",
-        "projectName": "DiscardInventoryItem",
-        "projectPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\DiscardInventoryItem.csproj",
+        "projectUniqueName": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj",
+        "projectName": "RecycleItemsIntoParts",
+        "projectPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\RecycleItemsIntoParts.csproj",
         "packagesPath": "C:\\Users\\Administrator\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\obj\\",
         "projectStyle": "PackageReference",

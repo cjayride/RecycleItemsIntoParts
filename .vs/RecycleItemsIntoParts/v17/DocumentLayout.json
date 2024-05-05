@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{ADE42527-4947-4734-B1D2-CC8E8742888C}|RecycleItemsIntoParts\\DiscardInventoryItem.csproj|c:\\users\\administrator\\documents\\valheim-modding\\recycleitemsintoparts-main\\recycleitemsintoparts\\bepinexplugin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ADE42527-4947-4734-B1D2-CC8E8742888C}|RecycleItemsIntoParts\\DiscardInventoryItem.csproj|solutionrelative:recycleitemsintoparts\\bepinexplugin.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BepInExPlugin.cs",
+              "DocumentMoniker": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\BepInExPlugin.cs",
+              "RelativeDocumentMoniker": "RecycleItemsIntoParts\\BepInExPlugin.cs",
+              "ToolTip": "C:\\Users\\Administrator\\Documents\\Valheim-Modding\\RecycleItemsIntoParts-main\\RecycleItemsIntoParts\\BepInExPlugin.cs",
+              "RelativeToolTip": "RecycleItemsIntoParts\\BepInExPlugin.cs",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAABMAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-05-05T18:26:08.208Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
