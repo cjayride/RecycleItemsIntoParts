@@ -1,0 +1,15 @@
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\DiscardInventoryItem.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\DiscardInventoryItem.pdb
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.csproj.AssemblyReference.cache
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.GeneratedMSBuildEditorConfig.editorconfig
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.AssemblyInfoInputs.cache
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.AssemblyInfo.cs
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.csproj.CoreCompileInputs.cache
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardInventoryItem.pdb
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\ui_lib.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\obj\Debug\net480\DiscardI.A7B1390A.Up2Date
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\0Harmony20.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\BepInEx.Harmony.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\HarmonyXInterop.dll
+D:\valheim-mods\MistlandsMods\DiscardInventoryItem\bin\Debug\net480\BepInEx.Harmony.xml

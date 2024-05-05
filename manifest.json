@@ -1,0 +1,9 @@
+{
+    "name": "RecycleItemsIntoParts",
+    "version_number": "1.6.0",
+    "website_url": "https://github.com/cjayride/RecycleItemsIntoParts",
+    "description": "Fork of aedenthorn/DiscardInventoryItem for v0.217.46+ Repair your gear using Coins.",
+    "dependencies": [
+		"denikson-BepInExPack_Valheim-5.4.2202"
+    ]
+}
