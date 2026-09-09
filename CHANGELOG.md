@@ -1,3 +1,6 @@
+# v1.7.1
+- Fixed NullReferenceException when recycling (ObjectDB.m_items can contain objects without ItemDrop in Valheim 1.0)
+
 # v1.7.0
 - Updated for Valheim 1.0
 - Fixed Inventory.AddItem for the 1.0 signature (avoids MissingMethodException when returning recycled parts)

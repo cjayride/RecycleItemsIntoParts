@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.0")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.1")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -197,8 +197,13 @@ namespace DiscardInventoryItem
                                         foreach (Piece.Requirement req in reqs) {
                                             int quality = ___m_dragItem.m_quality;
                                             for (int j = quality; j > 0; j--) {
-                                                GameObject prefab = ObjectDB.instance.m_items.FirstOrDefault(item => item.GetComponent<ItemDrop>().m_itemData.m_shared.m_name == req.m_resItem.m_itemData.m_shared.m_name);
-                                                ItemDrop.ItemData newItem = prefab.GetComponent<ItemDrop>().m_itemData.Clone();
+                                                GameObject prefab = GetRequirementPrefab(req);
+                                                if (prefab == null)
+                                                    continue;
+                                                ItemDrop prefabDrop = prefab.GetComponent<ItemDrop>();
+                                                if (prefabDrop == null)
+                                                    continue;
+                                                ItemDrop.ItemData newItem = prefabDrop.m_itemData.Clone();
                                                 int numToAdd = Mathf.RoundToInt(req.GetAmount(j) * returnResources.Value);
                                                 Dbgl($"Returning {numToAdd}/{req.GetAmount(j)} {prefab.name}");
                                                 while (numToAdd > 0) {
@@ -251,6 +256,19 @@ namespace DiscardInventoryItem
                 }
 
             }
+        }
+
+        private static GameObject GetRequirementPrefab(Piece.Requirement req)
+        {
+            if (req?.m_resItem?.m_itemData?.m_shared == null)
+                return null;
+
+            GameObject prefab = ObjectDB.instance.GetItemPrefab(req.m_resItem.m_itemData.m_shared);
+            if (prefab == null)
+                prefab = ObjectDB.instance.GetItemPrefab(req.m_resItem.name);
+            if (prefab == null)
+                prefab = req.m_resItem.gameObject;
+            return prefab;
         }
     }
 }
