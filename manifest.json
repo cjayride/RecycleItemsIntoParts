@@ -1,6 +1,6 @@
 {
     "name": "RecycleItemsIntoParts",
-    "version_number": "1.7.1",
+    "version_number": "1.7.2",
     "website_url": "https://github.com/cjayride/RecycleItemsIntoParts",
     "description": "Fork of aedenthorn/DiscardInventoryItem. Recycle items into lesser parts. Drag and press [Delete]. Updated for Valheim 1.0.",
     "dependencies": [

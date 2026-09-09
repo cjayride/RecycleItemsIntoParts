@@ -1,3 +1,6 @@
+# v1.7.2
+- Recycling no longer returns Valheim 1.0 upgrade idols (for example Wooden Protection Idol)
+
 # v1.7.1
 - Fixed NullReferenceException when recycling (ObjectDB.m_items can contain objects without ItemDrop in Valheim 1.0)
 

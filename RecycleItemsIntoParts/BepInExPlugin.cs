@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.1")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.2")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -189,6 +189,7 @@ namespace DiscardInventoryItem
                                     //Dbgl("ENDING");
                                     if (removeIt)
                                         reqs.RemoveAt(numToRemove);
+                                    reqs.RemoveAll(IsUpgradeOnlyResource);
                                     //Dbgl("GG");
                                     // <-------------------------------------------- END
 
@@ -256,6 +257,19 @@ namespace DiscardInventoryItem
                 }
 
             }
+        }
+
+        private static bool IsUpgradeOnlyResource(Piece.Requirement req)
+        {
+            if (req == null)
+                return true;
+            if (req.m_upgraderResource)
+                return true;
+
+            string prefabName = req.m_resItem != null ? req.m_resItem.name : "";
+            string sharedName = req.m_resItem?.m_itemData?.m_shared?.m_name ?? "";
+            return prefabName.IndexOf("Idol", StringComparison.OrdinalIgnoreCase) >= 0
+                || sharedName.IndexOf("idol", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         private static GameObject GetRequirementPrefab(Piece.Requirement req)
