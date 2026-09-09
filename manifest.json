@@ -1,9 +1,9 @@
 {
     "name": "RecycleItemsIntoParts",
-    "version_number": "1.6.0",
+    "version_number": "1.7.0",
     "website_url": "https://github.com/cjayride/RecycleItemsIntoParts",
-    "description": "Fork of aedenthorn/DiscardInventoryItem for v0.217.46+ Recycle items into lesser parts. Drag and press [Delete]. Option to not give back Coins, Magic Parts (EpicLoot), Magic Shards (EpicLoot). Option to block recycling of Consumables and Trophies.",
+    "description": "Fork of aedenthorn/DiscardInventoryItem. Recycle items into lesser parts. Drag and press [Delete]. Updated for Valheim 1.0.",
     "dependencies": [
-		"denikson-BepInExPack_Valheim-5.4.2202"
+		"denikson-BepInExPack_Valheim-5.4.2350"
     ]
 }

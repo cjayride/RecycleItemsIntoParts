@@ -1,19 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.6.0</AssemblyVersion>
-    <FileVersion>1.6.0</FileVersion>
+    <Version>1.7.0</Version>
+    <AssemblyVersion>1.7.0</AssemblyVersion>
+    <FileVersion>1.7.0</FileVersion>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\valheim.targets" />
   <ItemGroup>
-    <Reference Include="0Harmony20">
-      <HintPath>..\Libraries\BepInEx\core\0Harmony20.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx.Harmony">
-      <HintPath>..\Libraries\BepInEx\core\BepInEx.Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="ui_lib">
-      <HintPath>..\Libraries\BepInEx\core\ui_lib.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
+  <Import Project="$(MSBuildThisFileDirectory)..\valheim.targets" />
 </Project>

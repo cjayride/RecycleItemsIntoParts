@@ -53,6 +53,7 @@
     <BepInExPath>$(GamePath)\BepInEx</BepInExPath>
     <ManagedDataPath>$(GamePath)\valheim_Data\Managed</ManagedDataPath>
     <UnityPath>$(GamePath)\unstripped_corlib</UnityPath>
+    <UnityPath Condition="!Exists('$(UnityPath)')">$(ManagedDataPath)</UnityPath>
   </PropertyGroup>
   
   <!-- Add BepInEx references -->

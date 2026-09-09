@@ -1,3 +1,10 @@
+# v1.7.0
+- Updated for Valheim 1.0
+- Fixed Inventory.AddItem for the 1.0 signature (avoids MissingMethodException when returning recycled parts)
+- Trophy recycle option now matches ItemType.Trophy
+- Shard recycle option now uses RecycleShards instead of RecycleTrophy when deciding whether to delete shards
+- Updated BepInExPack dependency to 5.4.2350
+
 # v1.6.0
 - Removed terminal reload
 - Added compatibility for v0.217.46

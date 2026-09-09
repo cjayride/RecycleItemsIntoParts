@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.6.0")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.0")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -179,7 +179,7 @@ namespace DiscardInventoryItem
                                         //Dbgl("##############");
 
 
-                                        if (req.m_resItem.m_itemData.m_shared.m_itemType.ToString() == "Trophies" && !recycleTrophy.Value) {
+                                        if (req.m_resItem.m_itemData.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Trophy && !recycleTrophy.Value) {
                                             //Dbgl("IN THE LOOP");
                                             numToRemove = indexCount;
                                             removeIt = true;
@@ -207,10 +207,11 @@ namespace DiscardInventoryItem
 
 
                                                     // added by cjayride
-                                                    if ((prefab.name == "Coins" && recycleCoins.Value) || req.m_resItem.m_itemData.m_shared.m_itemType.ToString() == "Trophie" && recycleTrophy.Value || (prefab.name != "Coins" && req.m_resItem.m_itemData.m_shared.m_itemType.ToString() != "Trophie")) {
+                                                    ItemDrop.ItemData.ItemType itemType = req.m_resItem.m_itemData.m_shared.m_itemType;
+                                                    if ((prefab.name == "Coins" && recycleCoins.Value) || (itemType == ItemDrop.ItemData.ItemType.Trophy && recycleTrophy.Value) || (prefab.name != "Coins" && itemType != ItemDrop.ItemData.ItemType.Trophy)) {
 
-                                                        // original code
-                                                        if (Player.m_localPlayer.GetInventory().AddItem(prefab.name, stack, req.m_resItem.m_itemData.m_quality, req.m_resItem.m_itemData.m_variant, 0, "") == null) {
+                                                        // Valheim 1.0: AddItem(name, stack, quality, variant, crafterID, crafterName, pickedUp, worldLevelInherit)
+                                                        if (Player.m_localPlayer.GetInventory().AddItem(prefab.name, stack, req.m_resItem.m_itemData.m_quality, req.m_resItem.m_itemData.m_variant, 0L, "", false, true) == null) {
                                                             ItemDrop component = Instantiate(prefab, Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.forward + Player.m_localPlayer.transform.up, Player.m_localPlayer.transform.rotation).GetComponent<ItemDrop>();
                                                             component.m_itemData = newItem;
                                                             component.m_itemData.m_dropPrefab = prefab;
@@ -227,7 +228,7 @@ namespace DiscardInventoryItem
                             }
                             
                             // added by cjayride - check items were added before actually deleting held item. don't want to delete the base
-                            if ((foundConsumable && recycleConsumables.Value || !foundConsumable) && (foundShards && recycleTrophy.Value || !foundShards)) {
+                            if ((foundConsumable && recycleConsumables.Value || !foundConsumable) && (foundShards && recycleShards.Value || !foundShards)) {
                                 Player.m_localPlayer.Message(MessageHud.MessageType.Center, "Recycling...");
 
                                 if (___m_dragAmount == ___m_dragItem.m_stack) {

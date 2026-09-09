@@ -1,6 +1,6 @@
 # RecycleItemsIntoParts
 
-Patched for Valheim v0.217.46+
+Updated for Valheim 1.0
 
 A fork of [aedenthorn/DiscardInventoryItem](https://github.com/aedenthorn/ValheimMods/tree/master/DiscardInventoryItem) 
 
@@ -88,10 +88,14 @@ CJAYCRAFT PLAYERS - This setting must be: false
 
 # Contact
 
-- Twitter: twitter.com/cjayride
+- 𝕏: x.com/cjayride
 
 - Discord: discord.gg/cjayride (find me at the top of the user list) "cjayride"
 
 - Twitch: twitch.tv/cjayride
+
+# AI Generated
+
+This code was not AI Generated, however, AI was used to verify that it works with the new version of the game.
 
 
