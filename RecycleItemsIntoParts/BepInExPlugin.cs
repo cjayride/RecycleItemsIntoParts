@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.2")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.3")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -155,41 +155,7 @@ namespace DiscardInventoryItem
 
                                 if (!cancel && ___m_dragAmount / recipe.m_amount > 0) {
 
-                                    // START ---------------------------------------------> 
-                                    // added by cjayride
-                                    int indexCount = 0;
-                                    int numToRemove = 0;
-                                    bool removeIt = false;
-
-                                    //Dbgl("STARTING");
-                                    foreach (Piece.Requirement req in reqs) {
-
-                                        //Dbgl("### req.m_resItem.m_itemData.m_shared.m_name " + req.m_resItem.m_itemData.m_shared.m_name + " ###");
-                                        //Dbgl("### recycleCoins.Value " + recycleCoins.Value + " ###");
-
-                                        if (req.m_resItem.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value) {
-                                            //Dbgl("IN THE LOOP");
-                                            numToRemove = indexCount;
-                                            removeIt = true;
-                                            break;
-                                        }
-
-                                        //Dbgl("##############");
-                                        //Dbgl(req.m_resItem.m_itemData.m_shared.m_itemType.ToString());
-                                        //Dbgl("##############");
-
-
-                                        if (req.m_resItem.m_itemData.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Trophy && !recycleTrophy.Value) {
-                                            //Dbgl("IN THE LOOP");
-                                            numToRemove = indexCount;
-                                            removeIt = true;
-                                            break;
-                                        }
-                                    }
-                                    //Dbgl("ENDING");
-                                    if (removeIt)
-                                        reqs.RemoveAt(numToRemove);
-                                    reqs.RemoveAll(IsUpgradeOnlyResource);
+                                    reqs.RemoveAll(ShouldSkipReturnedResource);
                                     //Dbgl("GG");
                                     // <-------------------------------------------- END
 
@@ -257,6 +223,19 @@ namespace DiscardInventoryItem
                 }
 
             }
+        }
+
+        private static bool ShouldSkipReturnedResource(Piece.Requirement req)
+        {
+            if (req?.m_resItem?.m_itemData?.m_shared == null)
+                return true;
+            if (IsUpgradeOnlyResource(req))
+                return true;
+            if (req.m_resItem.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value)
+                return true;
+            if (req.m_resItem.m_itemData.m_shared.m_itemType == ItemDrop.ItemData.ItemType.Trophy && !recycleTrophy.Value)
+                return true;
+            return false;
         }
 
         private static bool IsUpgradeOnlyResource(Piece.Requirement req)

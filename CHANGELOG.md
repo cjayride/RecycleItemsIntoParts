@@ -1,3 +1,6 @@
+# v1.7.3
+- Fixed enchanted gear recycling dropping the first craft material (for example a boar skirt returning essences but no hides) when coins were also in the EpicLoot enchant cost
+
 # v1.7.2
 - Recycling no longer returns Valheim 1.0 upgrade idols (for example Wooden Protection Idol)
 
