@@ -1,3 +1,45 @@
+# v1.8.5
+- Recycle confirm list shows each returned item's icon next to its name
+- Removed the hover-delete hint popup (it fired on every hover). Recycle is drag the item, then Delete
+- EpicLoot enchanted gear still returns downgraded enchant materials when enabled
+
+# v1.8.4
+- Hover + Delete checks every inventory grid slot under the mouse in screen space (including extra inventory mods)
+
+# v1.8.3
+- Hover + Delete follows the item tooltip under the mouse
+- If no item is held or hovered, Delete explains to drag the item first
+
+# v1.8.2
+- Hover + Delete uses the inventory slot under the mouse cursor (UI raycast)
+
+# v1.8.1
+- Yes / No are real colored buttons on the recycle window (not cloned hidden inventory buttons)
+- Hover + Delete uses the slot the pointer entered, not only a dragged item
+
+# v1.8.0
+- Recycle Yes/No is a small inventory window (not the full-screen Valheim pause popup)
+- Yes and No buttons work; Escape or right-click cancels
+
+# v1.7.9
+- Recycle confirmation is a Yes/No popup on top of the inventory, listing the item and parts you will get
+- Hover now uses the inventory cell under the mouse (no longer recycles slot 1 by mistake)
+
+# v1.7.8
+- Recycle preview and results show in the center HUD as one line (item + returned parts)
+- Optional top-left notifications: `UseTopLeftNotifications = false` by default
+- Hover + Delete uses the hovered inventory slot (not only a dragged item)
+- RecycleHotkey is read as Unity KeyCode `Delete` (stops BepInEx 'delete' keybind errors)
+
+# v1.7.7
+- Recycle works on a hovered item or a dragged item (Delete no longer requires a drag)
+- First Delete shows a confirmation with the item name and returned parts; press Delete again within 4 seconds to confirm
+- HUD messages list what is being recycled and what you get back
+- RecycleHotkey uses KeyCode.Delete so it registers in Valheim 1.0 / Unity 6
+
+# v1.7.6
+- Added togglable server-enforced config (`ServerEnforced = true` by default). Host/server recycle settings apply to clients; set false for per-player configs. Recycle hotkey stays local.
+
 # v1.7.5
 - Enchant materials are no longer doubled on upgraded items (quality loop)
 - Enchant returns drop one EpicLoot rarity (Legendary -> Epic). Magic rarity returns none

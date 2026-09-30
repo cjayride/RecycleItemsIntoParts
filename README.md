@@ -8,7 +8,8 @@ A fork of [aedenthorn/DiscardInventoryItem](https://github.com/aedenthorn/Valhei
 
 # This mod recycles items into parts
 
-- Break down (recycle) items on the fly, by drag clicking an item and clicking [Delete]
+- Drag an item, then press [Delete]
+- A Yes/No popup lists the item and the parts you will get; Yes recycles, No cancels
 
 - Control the percentage (%) of parts returned (in the config)
 
@@ -33,6 +34,18 @@ Setup has completely changed, now that all mods have been updated for Mistlands.
 > BepInEx/config/cjayride.RecycleItemsIntoParts.cfg
 
 Launch the game once to generate the config file and review the options.
+
+# Server enforced | DefaultSetting = true
+
+> ServerEnforced = true
+
+When true, clients use the **server/host** recycle rules (return percent, coins, trophies, enchant downgrade, etc.). Players cannot override those values while connected.
+
+When false, each player uses their own config.
+
+The recycle hotkey is never server-enforced.
+
+CJAYCRAFT PLAYERS - This setting must be: true
 
 # Craft material return | DefaultSetting = 0.25
 
@@ -97,6 +110,12 @@ By default, this mod WILL allow you to recycle ShardMagic [EpicLoot].
 > RecycleShards = true
 
 CJAYCRAFT PLAYERS - This setting must be: false
+
+# Confirm recycle | DefaultSetting = true
+
+> RequireConfirm = true
+
+First [Delete] opens a **Yes / No** window over the inventory (not the full-screen pause popup). It names the item and lists the parts you will get. Yes recycles; No, Escape, or right-click cancels.
 
 # Contact
 
