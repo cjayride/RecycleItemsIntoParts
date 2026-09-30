@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.3")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.7.5")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
@@ -33,6 +33,7 @@ namespace DiscardInventoryItem
         public static ConfigEntry<bool> recycleConsumables;
         public static ConfigEntry<bool> recycleTrophy;
         public static ConfigEntry<bool> recycleShards;
+        public static ConfigEntry<bool> downgradeEnchantRarity;
 
         public static void Dbgl(string str = "", bool pref = true)
         {
@@ -47,16 +48,12 @@ namespace DiscardInventoryItem
             modEnabled = Config.Bind<bool>("General", "Enabled", true, "Enable this mod");
             returnUnknownResources = Config.Bind<bool>("General", "ReturnUnknownResources", true, "Return resources if recipe is unknown");
             returnEnchantedResources = Config.Bind<bool>("General", "ReturnEnchantedResources", true, "Return resources for Epic Loot enchantments");
-            returnResources = Config.Bind<float>("General", "ReturnResources", (float)1.0, "Fraction of resources to return (0.0 - 1.0)");
-
-            // added by cjayride
-            recycleCoins = Config.Bind<bool>("General", "RecycleCoins", false, "Enable/disable coins on recycling items"); // enchanted items will recycle with coins, in some cases we don't want that because it messes with the economy
-            //betterArchery = Config.Bind<bool>("General", "UsingBetterArchery", false, "Set to 'true' if you're using the Better Archery mod");
-            //betterArcheryCount = Config.Bind<int>("General", "BetterArcheryInventoryCount", 16, "Number of extra slots added by Better Archery to use in calculation (inventory count fix) (Don't change this unless you know what you're doing.)");
-            //inventoryRows = Config.Bind<int>("General", "InventoryRows", 4, "The number of inventory rows you're playing with will affect calculations. Default is 4. Some mods add more rows, so you need to change this here for the mod to work with BetterArchery. BetterArchery quiver slots are 2 rows below your last inventory row.");
+            returnResources = Config.Bind<float>("General", "ReturnResources", 0.25f, "Fraction of craft materials to return (0.0 - 1.0). 0.25 means 1 bronze returns nothing, 4 bronze returns 1.");
+            recycleCoins = Config.Bind<bool>("General", "RecycleCoins", false, "Enable/disable coins on recycling items");
             recycleConsumables = Config.Bind<bool>("General", "RecycleConsumables", true, "Enable/disable recycling of consumables (like food) (need to disable for cjaycraft ultimate modpack)");
             recycleTrophy = Config.Bind<bool>("General", "RecycleTrophy", true, "Enable/disable recycling of Trophy items (need to disable for cjaycraft ultimate modpack)");
             recycleShards = Config.Bind<bool>("General", "RecycleShards", true, "Enable/disable recycling of Shards (need to disable for cjaycraft ultimate modpack)");
+            downgradeEnchantRarity = Config.Bind<bool>("General", "DowngradeEnchantRarity", true, "Return EpicLoot enchant materials one rarity lower (Legendary -> Epic). Lowest Magic rarity returns none.");
 
 
             if (!modEnabled.Value)
@@ -136,63 +133,45 @@ namespace DiscardInventoryItem
                                 if (epicLootAssembly != null && returnEnchantedResources.Value) {
                                     isMagic = (bool)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("IsMagic", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(ItemDrop.ItemData) }, null).Invoke(null, new[] { ___m_dragItem });
                                 }
+                                List<KeyValuePair<ItemDrop, int>> magicReqs = null;
                                 if (isMagic) {
                                     int rarity = (int)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("GetRarity", BindingFlags.Public | BindingFlags.Static).Invoke(null, new[] { ___m_dragItem });
-                                    List<KeyValuePair<ItemDrop, int>> magicReqs = (List<KeyValuePair<ItemDrop, int>>)epicLootAssembly.GetType("EpicLoot.Crafting.EnchantHelper").GetMethod("GetEnchantCosts", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { ___m_dragItem, rarity });
-                                    foreach (var kvp in magicReqs) {
-                                        if (!returnUnknownResources.Value && ((ObjectDB.instance.GetRecipe(kvp.Key.m_itemData) && !Player.m_localPlayer.IsRecipeKnown(kvp.Key.m_itemData.m_shared.m_name)) || !Traverse.Create(Player.m_localPlayer).Field("m_knownMaterial").GetValue<HashSet<string>>().Contains(kvp.Key.m_itemData.m_shared.m_name))) {
-                                            Player.m_localPlayer.Message(MessageHud.MessageType.Center, "You don't know all the recipes for this item's materials.");
-                                            return;
-                                        }
-                                        reqs.Add(new Piece.Requirement() {
-                                            m_amount = kvp.Value,
-                                            m_resItem = kvp.Key
-                                        });
+                                    int returnRarity = rarity;
+                                    if (downgradeEnchantRarity.Value) {
+                                        if (rarity <= 0)
+                                            returnRarity = -1;
+                                        else
+                                            returnRarity = rarity - 1;
+                                    }
+                                    if (returnRarity >= 0) {
+                                        magicReqs = (List<KeyValuePair<ItemDrop, int>>)epicLootAssembly.GetType("EpicLoot.Crafting.EnchantHelper").GetMethod("GetEnchantCosts", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { ___m_dragItem, returnRarity });
                                     }
                                 }
-
-                                //Dbgl("############## CHECKING RECIPE AMOUNT ############");
 
                                 if (!cancel && ___m_dragAmount / recipe.m_amount > 0) {
 
                                     reqs.RemoveAll(ShouldSkipReturnedResource);
-                                    //Dbgl("GG");
-                                    // <-------------------------------------------- END
-
 
                                     for (int i = 0; i < ___m_dragAmount / recipe.m_amount; i++) {
                                         foreach (Piece.Requirement req in reqs) {
                                             int quality = ___m_dragItem.m_quality;
                                             for (int j = quality; j > 0; j--) {
-                                                GameObject prefab = GetRequirementPrefab(req);
-                                                if (prefab == null)
-                                                    continue;
-                                                ItemDrop prefabDrop = prefab.GetComponent<ItemDrop>();
-                                                if (prefabDrop == null)
-                                                    continue;
-                                                ItemDrop.ItemData newItem = prefabDrop.m_itemData.Clone();
                                                 int numToAdd = Mathf.RoundToInt(req.GetAmount(j) * returnResources.Value);
-                                                Dbgl($"Returning {numToAdd}/{req.GetAmount(j)} {prefab.name}");
-                                                while (numToAdd > 0) {
-                                                    int stack = Mathf.Min(req.m_resItem.m_itemData.m_shared.m_maxStackSize, numToAdd);
-                                                    numToAdd -= stack;
+                                                ReturnRequirement(req, numToAdd);
+                                            }
+                                        }
 
-
-                                                    // added by cjayride
-                                                    ItemDrop.ItemData.ItemType itemType = req.m_resItem.m_itemData.m_shared.m_itemType;
-                                                    if ((prefab.name == "Coins" && recycleCoins.Value) || (itemType == ItemDrop.ItemData.ItemType.Trophy && recycleTrophy.Value) || (prefab.name != "Coins" && itemType != ItemDrop.ItemData.ItemType.Trophy)) {
-
-                                                        // Valheim 1.0: AddItem(name, stack, quality, variant, crafterID, crafterName, pickedUp, worldLevelInherit)
-                                                        if (Player.m_localPlayer.GetInventory().AddItem(prefab.name, stack, req.m_resItem.m_itemData.m_quality, req.m_resItem.m_itemData.m_variant, 0L, "", false, true) == null) {
-                                                            ItemDrop component = Instantiate(prefab, Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.forward + Player.m_localPlayer.transform.up, Player.m_localPlayer.transform.rotation).GetComponent<ItemDrop>();
-                                                            component.m_itemData = newItem;
-                                                            component.m_itemData.m_dropPrefab = prefab;
-                                                            component.m_itemData.m_stack = stack;
-                                                            Traverse.Create(component).Method("Save").GetValue();
-                                                        }
-
-                                                    }
-                                                }
+                                        if (magicReqs != null) {
+                                            foreach (var kvp in magicReqs) {
+                                                if (kvp.Key?.m_itemData?.m_shared == null)
+                                                    continue;
+                                                if (kvp.Key.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value)
+                                                    continue;
+                                                var enchantReq = new Piece.Requirement() {
+                                                    m_amount = kvp.Value,
+                                                    m_resItem = kvp.Key
+                                                };
+                                                ReturnRequirement(enchantReq, kvp.Value);
                                             }
                                         }
                                     }
@@ -222,6 +201,37 @@ namespace DiscardInventoryItem
                     }
                 }
 
+            }
+        }
+
+        private static void ReturnRequirement(Piece.Requirement req, int numToAdd)
+        {
+            if (numToAdd <= 0 || req?.m_resItem?.m_itemData?.m_shared == null)
+                return;
+
+            GameObject prefab = GetRequirementPrefab(req);
+            if (prefab == null)
+                return;
+            ItemDrop prefabDrop = prefab.GetComponent<ItemDrop>();
+            if (prefabDrop == null)
+                return;
+
+            ItemDrop.ItemData.ItemType itemType = req.m_resItem.m_itemData.m_shared.m_itemType;
+            if (!((prefab.name == "Coins" && recycleCoins.Value) || (itemType == ItemDrop.ItemData.ItemType.Trophy && recycleTrophy.Value) || (prefab.name != "Coins" && itemType != ItemDrop.ItemData.ItemType.Trophy)))
+                return;
+
+            ItemDrop.ItemData newItem = prefabDrop.m_itemData.Clone();
+            Dbgl($"Returning {numToAdd} {prefab.name}");
+            while (numToAdd > 0) {
+                int stack = Mathf.Min(req.m_resItem.m_itemData.m_shared.m_maxStackSize, numToAdd);
+                numToAdd -= stack;
+                if (Player.m_localPlayer.GetInventory().AddItem(prefab.name, stack, req.m_resItem.m_itemData.m_quality, req.m_resItem.m_itemData.m_variant, 0L, "", false, true) == null) {
+                    ItemDrop component = UnityEngine.Object.Instantiate(prefab, Player.m_localPlayer.transform.position + Player.m_localPlayer.transform.forward + Player.m_localPlayer.transform.up, Player.m_localPlayer.transform.rotation).GetComponent<ItemDrop>();
+                    component.m_itemData = newItem;
+                    component.m_itemData.m_dropPrefab = prefab;
+                    component.m_itemData.m_stack = stack;
+                    Traverse.Create(component).Method("Save").GetValue();
+                }
             }
         }
 

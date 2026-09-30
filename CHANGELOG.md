@@ -1,3 +1,11 @@
+# v1.7.5
+- Enchant materials are no longer doubled on upgraded items (quality loop)
+- Enchant returns drop one EpicLoot rarity (Legendary -> Epic). Magic rarity returns none
+- Default craft return is 25%. Amounts under 0.5 round to nothing, so 1 bronze returns 0 bronze
+
+# v1.7.4
+- Thunderstore version bump (1.7.3 was already published)
+
 # v1.7.3
 - Fixed enchanted gear recycling dropping the first craft material (for example a boar skirt returning essences but no hides) when coins were also in the EpicLoot enchant cost
 
