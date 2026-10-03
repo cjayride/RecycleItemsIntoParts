@@ -16,14 +16,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.5")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.6")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = true;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.5",
+            CurrentVersion = "1.8.6",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -33,6 +33,7 @@ namespace DiscardInventoryItem
         public static ConfigEntry<bool> returnUnknownResources;
         public static ConfigEntry<bool> returnEnchantedResources;
         public static ConfigEntry<float> returnResources;
+        public static ConfigEntry<float> returnResourcesMagic;
         private static BepInExPlugin context;
         private static Assembly epicLootAssembly;
 
@@ -46,6 +47,8 @@ namespace DiscardInventoryItem
         public static ConfigEntry<bool> recycleTrophy;
         public static ConfigEntry<bool> recycleShards;
         public static ConfigEntry<bool> downgradeEnchantRarity;
+        public static ConfigEntry<bool> magicDustSoftener;
+        public static ConfigEntry<int> magicDustSoftenerAmount;
         public static ConfigEntry<bool> requireConfirm;
 
         private static readonly Dictionary<string, ReturnPreview> pendingReturns = new Dictionary<string, ReturnPreview>();
@@ -88,12 +91,15 @@ namespace DiscardInventoryItem
             modEnabled = BindConfig("General", "Enabled", true, "Enable this mod");
             returnUnknownResources = BindConfig("General", "ReturnUnknownResources", true, "Return resources if recipe is unknown");
             returnEnchantedResources = BindConfig("General", "ReturnEnchantedResources", true, "Return resources for Epic Loot enchantments");
-            returnResources = BindConfig("General", "ReturnResources", 0.25f, "Fraction of craft materials to return (0.0 - 1.0). 0.25 means 1 bronze returns nothing, 4 bronze returns 1.");
+            returnResources = BindConfig("General", "ReturnResources", 0.40f, "Fraction of craft materials to return (0.0 - 1.0). 0.40 means 1 wood returns 0, 3 wood returns 1.");
+            returnResourcesMagic = BindConfig("General", "ReturnResourcesMagic", 0.40f, "Fraction of EpicLoot enchant materials to return after the rarity drop (0.0 - 1.0). 5 Magic Dust at 0.40 returns 2.");
             recycleCoins = BindConfig("General", "RecycleCoins", false, "Enable/disable coins on recycling items");
             recycleConsumables = BindConfig("General", "RecycleConsumables", true, "Enable/disable recycling of consumables (like food) (need to disable for cjaycraft ultimate modpack)");
             recycleTrophy = BindConfig("General", "RecycleTrophy", true, "Enable/disable recycling of Trophy items (need to disable for cjaycraft ultimate modpack)");
             recycleShards = BindConfig("General", "RecycleShards", true, "Enable/disable recycling of Shards (need to disable for cjaycraft ultimate modpack)");
-            downgradeEnchantRarity = BindConfig("General", "DowngradeEnchantRarity", true, "Return EpicLoot enchant materials one rarity lower (Legendary -> Epic). Lowest Magic rarity returns none.");
+            downgradeEnchantRarity = BindConfig("General", "DowngradeEnchantRarity", true, "Return EpicLoot enchant materials one rarity lower (Legendary -> Epic). Rare+ stay one tier down.");
+            magicDustSoftener = BindConfig("General", "MagicDustSoftener", true, "If true, green/Magic items return a little Magic Dust instead of no enchant mats.");
+            magicDustSoftenerAmount = BindConfig("General", "MagicDustSoftenerAmount", 1, "Magic Dust given by the green-item softener (1 or 2).");
             requireConfirm = BindConfig("General", "RequireConfirm", true, "Show a Yes/No popup with returned parts before recycling.");
 
             Harmony harmony = new Harmony(Info.Metadata.GUID);
@@ -1023,6 +1029,7 @@ namespace DiscardInventoryItem
                 isMagic = (bool)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("IsMagic", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(ItemDrop.ItemData) }, null).Invoke(null, new[] { dragItem });
 
             List<KeyValuePair<ItemDrop, int>> magicReqs = null;
+            bool scaleEnchantReturns = false;
             if (isMagic)
             {
                 int rarity = (int)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("GetRarity", BindingFlags.Public | BindingFlags.Static).Invoke(null, new[] { dragItem });
@@ -1030,7 +1037,12 @@ namespace DiscardInventoryItem
                 if (downgradeEnchantRarity.Value)
                     returnRarity = rarity <= 0 ? -1 : rarity - 1;
                 if (returnRarity >= 0)
+                {
                     magicReqs = (List<KeyValuePair<ItemDrop, int>>)epicLootAssembly.GetType("EpicLoot.Crafting.EnchantHelper").GetMethod("GetEnchantCosts", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { dragItem, returnRarity });
+                    scaleEnchantReturns = true;
+                }
+                else if (magicDustSoftener.Value)
+                    magicReqs = GetMagicDustSoftenerReqs();
             }
 
             if (recipe.m_amount > 0 && dragAmount / recipe.m_amount > 0)
@@ -1052,7 +1064,10 @@ namespace DiscardInventoryItem
                                 continue;
                             if (kvp.Key.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value)
                                 continue;
-                            QueueRequirement(new Piece.Requirement() { m_amount = kvp.Value, m_resItem = kvp.Key }, kvp.Value, commit);
+                            int give = scaleEnchantReturns
+                                ? Mathf.RoundToInt(kvp.Value * returnResourcesMagic.Value)
+                                : kvp.Value;
+                            QueueRequirement(new Piece.Requirement() { m_amount = kvp.Value, m_resItem = kvp.Key }, give, commit);
                         }
                     }
                 }
@@ -1075,6 +1090,53 @@ namespace DiscardInventoryItem
 
             instance.GetType().GetMethod("UpdateCraftingPanel", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(instance, new object[] { false });
             return true;
+        }
+
+        private static List<KeyValuePair<ItemDrop, int>> GetMagicDustSoftenerReqs()
+        {
+            int amount = magicDustSoftenerAmount.Value;
+            if (amount < 1)
+                amount = 1;
+            if (amount > 2)
+                amount = 2;
+
+            ItemDrop dust = FindMagicDust();
+            if (dust == null)
+                return null;
+
+            return new List<KeyValuePair<ItemDrop, int>> { new KeyValuePair<ItemDrop, int>(dust, amount) };
+        }
+
+        private static ItemDrop FindMagicDust()
+        {
+            if (ObjectDB.instance == null)
+                return null;
+
+            string[] names = { "DustMagic", "MagicDust", "dust_magic" };
+            foreach (string name in names)
+            {
+                GameObject prefab = ObjectDB.instance.GetItemPrefab(name);
+                if (prefab == null)
+                    continue;
+                ItemDrop drop = prefab.GetComponent<ItemDrop>();
+                if (drop != null)
+                    return drop;
+            }
+
+            foreach (GameObject prefab in ObjectDB.instance.m_items)
+            {
+                if (prefab == null)
+                    continue;
+                ItemDrop drop = prefab.GetComponent<ItemDrop>();
+                string shared = drop?.m_itemData?.m_shared?.m_name ?? "";
+                string prefabName = prefab.name ?? "";
+                if (shared.IndexOf("dust", StringComparison.OrdinalIgnoreCase) >= 0
+                    && (shared.IndexOf("magic", StringComparison.OrdinalIgnoreCase) >= 0 || prefabName.IndexOf("DustMagic", StringComparison.OrdinalIgnoreCase) >= 0))
+                    return drop;
+                if (prefabName.Equals("DustMagic", StringComparison.OrdinalIgnoreCase))
+                    return drop;
+            }
+            return null;
         }
 
         private static void QueueRequirement(Piece.Requirement req, int numToAdd, bool commit)

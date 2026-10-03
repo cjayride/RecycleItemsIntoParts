@@ -1,3 +1,8 @@
+# v1.8.6
+- Default craft return is 0.40
+- `ReturnResourcesMagic` scales EpicLoot enchant mats after the rarity drop (5 dust at 0.40 returns 2)
+- Optional `MagicDustSoftener` gives 1-2 Magic Dust on green/Magic items; Rare+ stay one tier down
+
 # v1.8.5
 - Recycle confirm list shows each returned item's icon next to its name
 - Removed the hover-delete hint popup (it fired on every hover). Recycle is drag the item, then Delete
