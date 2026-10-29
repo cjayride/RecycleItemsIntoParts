@@ -1,3 +1,7 @@
+# v1.8.7
+- Verified against Valheim 1.0.21 (Release build, Steam build 26249040).
+- Updated BepInExPack dependency to 5.4.2360
+
 # v1.8.6
 - Default craft return is 0.40
 - `ReturnResourcesMagic` scales EpicLoot enchant mats after the rarity drop (5 dust at 0.40 returns 2)

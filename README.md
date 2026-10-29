@@ -1,136 +1,134 @@
-# RecycleItemsIntoParts
+# ♻️ RecycleItemsIntoParts
 
-Updated for Valheim 1.0
+**Updated for Valheim 1.0.21**
 
-A fork of [aedenthorn/DiscardInventoryItem](https://github.com/aedenthorn/ValheimMods/tree/master/DiscardInventoryItem) 
+Recycle unwanted items into crafting materials with a simple **Delete** key shortcut.
 
-[ThunderStore](https://thunderstore.io/c/valheim/p/cjayride/RecycleItemsIntoParts) | [GitHub](https://github.com/cjayride/RecycleItemsIntoParts)
+A fork of [DiscardInventoryItem by aedenthorn](https://github.com/aedenthorn/ValheimMods/tree/master/DiscardInventoryItem).
 
-# This mod recycles items into parts
+[Thunderstore](https://thunderstore.io/c/valheim/p/cjayride/RecycleItemsIntoParts/) · [GitHub](https://github.com/cjayride/RecycleItemsIntoParts)
 
-- Drag an item, then press [Delete]
-- A Yes/No popup lists the item and the parts you will get; Yes recycles, No cancels
+---
 
-- Control the percentage (%) of parts returned (in the config)
+## 🎮 How to Use
 
-- Control the types of parts to be recycled: 
+1. Select an item in your inventory.
+2. Press **Delete**.
+3. Review the materials you'll receive.
+4. Click **Yes** to recycle or **No** to cancel.
 
-**Enchanting Parts [EpicLoot]**
+Press **Escape** or right-click to cancel, too.
 
-**ShardMagic [EpicLoot]**
+## ✨ What Can Be Recycled?
 
-**Coins**
+- 🪵 Crafting materials
+- ✨ Epic Loot enchantment materials
+- 💎 Epic Loot Magic Shards
+- 🪙 Coins
+- 🏆 Trophies
+- 🍖 Consumables
 
-**Consumables**
+Each category can be enabled or disabled in the configuration.
 
-**Trophies** 
+---
 
-# Setup / Configuration
+## ⚙️ Configuration
 
-Setup has completely changed, now that all mods have been updated for Mistlands. Check the values in the config file.
+Launch the game once to generate the config file:
 
-# Edit the config file
+`BepInEx/config/cjayride.RecycleItemsIntoParts.cfg`
 
-> BepInEx/config/cjayride.RecycleItemsIntoParts.cfg
+### 🖥️ Server Settings
 
-Launch the game once to generate the config file and review the options.
+```ini
+ServerEnforced = true
+```
 
-# Server enforced | DefaultSetting = true
+**Default:** `true`
 
-> ServerEnforced = true
+When enabled, everyone follows the server's recycling rules.
 
-When true, clients use the **server/host** recycle rules (return percent, coins, trophies, enchant downgrade, etc.). Players cannot override those values while connected.
+**CJAYCRAFT:** Must be `true`.
 
-When false, each player uses their own config.
+### 🪵 Resource Returns
 
-The recycle hotkey is never server-enforced.
+```ini
+ReturnResources = 0.40
+ReturnResourcesMagic = 0.40
+```
 
-CJAYCRAFT PLAYERS - This setting must be: true
+| Setting | Purpose |
+|---|---|
+| `ReturnResources` | Percentage of crafting materials returned. |
+| `ReturnResourcesMagic` | Percentage of enchantment materials returned. |
 
-# Craft material return | DefaultSetting = 0.40
+**Default:** `0.40` = 40%
 
-> ReturnResources = 0.40
+Returned quantities are rounded. For example, 3 Wood returns 1 Wood.
 
-40% of the craft recipe, rounded. A 1-wood item returns **no wood** (0.40 rounds to 0). A 3-wood item returns 1 wood.
+### ✨ Enchanted Gear
 
-# EpicLoot enchant return | DefaultSetting = 0.40
+```ini
+ReturnEnchantedResources = true
+DowngradeEnchantRarity = true
+MagicDustSoftener = true
+```
 
-> ReturnResourcesMagic = 0.40
+- **ReturnEnchantedResources** — Recycle enchanted gear into magic materials.
+- **DowngradeEnchantRarity** — Return materials one rarity tier below the item's rarity.
+- **MagicDustSoftener** — Green magic items return 1–2 Magic Dust.
 
-After the rarity drop, enchant mats are scaled by this value. 5 Magic Dust at 0.40 returns 2.
+**CJAYCRAFT:** Keep `ReturnEnchantedResources = true`.
 
-# Recycle EpicLoot Enchanted Gear for Magic Parts | DefaultSetting = true
+### 🚫 Optional Recycling Restrictions
 
-> ReturnEnchantedResources = true
+Change these settings to control what players can recover.
 
-CJAYCRAFT PLAYERS - This setting must be: true
+| Setting | Default | Effect |
+|---|---|---|
+| `RecycleCoins` | `false` | Allow Coins to be returned. |
+| `RecycleTrophy` | `true` | Allow Trophies to be returned. |
+| `RecycleConsumables` | `true` | Allow food and consumables to be recycled. |
+| `RecycleShards` | `true` | Allow Epic Loot Magic Shards to be recycled. |
 
-Enchant returns are **one rarity lower** than the item (`DowngradeEnchantRarity = true`). A legendary sledge returns epic runestone/dust/essence, not legendary.
+**CJAYCRAFT server settings:**
 
-Green Magic items return 1-2 Magic Dust when `MagicDustSoftener = true`.
+```ini
+RecycleCoins = false
+RecycleTrophy = false
+RecycleConsumables = false
+RecycleShards = false
+```
 
-# Give Back Coins? | DefaultSetting = false
+These restrictions help protect the server economy and custom recipes.
 
-When recycling parts, don't give Coins (enable/disable).
+### ✅ Confirmation Popup
 
-It cost Coins to enchant with Epic Loot, so if you recycle an item it will usually return Coins. Some servers and players may not want this. Items gave back too many coins and it messed up our server economy.
+```ini
+RequireConfirm = true
+```
 
-> RecycleCoins = false
+When enabled, the popup shows the item and the materials you'll receive before recycling.
 
-CJAYCRAFT PLAYERS - This setting must be: false
+**CJAYCRAFT:** Keep this enabled.
 
-# Give Back Trophies | DefaultSetting = True
+---
 
-Don't want to give back Trophies when recycling?
+## 📦 Installation
 
-On our server, we didn't want people to get back Trophies, much like we don't want to give back Coins, because it affects the economy of our server. Items can still be recycled, but if it contains a Trophy, it just won't give back the Trophy.
+1. Install BepInEx.
+2. Install RecycleItemsIntoParts.
+3. Launch Valheim to generate the config.
+4. Adjust settings as needed.
 
-By default, the mod WILL give Trophies.
+For CJAYCRAFT, use the server settings listed above.
 
-> RecycleTrophy = true
+## 📬 Contact
 
-CJAYCRAFT PLAYERS - This setting must be: false
+- **X:** [@cjayride](https://x.com/cjayride)
+- **Discord:** [discord.gg/cjayride](https://discord.gg/cjayride)
+- **Twitch:** [twitch.tv/cjayride](https://twitch.tv/cjayride)
 
-# Allow Recycle Consumables | DefaultSetting = True
+## 🤖 Development
 
-Don't allow recycling of a food TYPE item.
-
-On our server, we didn't want people recycling food because it gave certain items that might affect the economy. Potentially, if an item contains a recipe part that is food, that food item would be returned. This only specifically targets the item that is being recycled. If the item is food, it can't be recycled.
-
-By default, this mod WILL allow you to recycle consumables. 
-
-> RecycleConsumables = true
-
-CJAYCRAFT PLAYERS - This setting must be: RecycleConsumables = false
-
-# Allow  Recycle ShardMagic [EpicLoot] | DefaultSetting = True
-
-Don't allow recycling of the item ShardMagic [EpicLoot].
-
-On our server, we didn't want people recycling the green rarity Magic Shards (Epic Loot) because it interferes with some recipes we're using.
-
-By default, this mod WILL allow you to recycle ShardMagic [EpicLoot]. 
-
-> RecycleShards = true
-
-CJAYCRAFT PLAYERS - This setting must be: false
-
-# Confirm recycle | DefaultSetting = true
-
-> RequireConfirm = true
-
-First [Delete] opens a **Yes / No** window over the inventory (not the full-screen pause popup). It names the item and lists the parts you will get. Yes recycles; No, Escape, or right-click cancels.
-
-# Contact
-
-- 𝕏: x.com/cjayride
-
-- Discord: discord.gg/cjayride (find me at the top of the user list) "cjayride"
-
-- Twitch: twitch.tv/cjayride
-
-# AI Generated
-
-This code was not AI Generated, however, AI was used to verify that it works with the new version of the game.
-
-
+The code was **not AI-generated**. AI was used to help verify compatibility with Valheim 1.0.
