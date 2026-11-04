@@ -6,7 +6,6 @@ using ServerSync;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
@@ -16,14 +15,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.7")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.9")]
     public class BepInExPlugin: BaseUnityPlugin
     {
-        private static readonly bool isDebug = true;
+        private static readonly bool isDebug = false;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.7",
+            CurrentVersion = "1.8.9",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -64,6 +63,28 @@ namespace DiscardInventoryItem
         private static Vector2i pointerPos;
         private static ItemDrop.ItemData pointerItem;
         private static Component hoveredTooltip;
+        private static readonly List<InventoryGrid> cachedGrids = new List<InventoryGrid>();
+        private static readonly Vector3[] worldCorners = new Vector3[4];
+        private static readonly List<RaycastResult> raycastHits = new List<RaycastResult>();
+        private static FieldInfo dragItemField;
+        private static FieldInfo dragInventoryField;
+        private static FieldInfo dragAmountField;
+        private static FieldInfo dragGoField;
+        private static FieldInfo playerGridField;
+        private static FieldInfo containerGridField;
+        private static FieldInfo recipeNameField;
+        private static FieldInfo playerNameField;
+        private static FieldInfo elementsField;
+        private static Action<InventoryGui, bool> updateCraftingPanel;
+        private static Func<Vector3> getMousePosition;
+        private static Func<InventoryGrid, GameObject, Vector2i> getButtonPos;
+        private static Func<InventoryGrid, InventoryElement> getHoveredElement;
+        private static Action<ItemDrop> saveItemDrop;
+        private static MethodInfo epicIsMagic;
+        private static MethodInfo epicGetRarity;
+        private static MethodInfo epicGetEnchantCosts;
+        private static ItemDrop cachedMagicDust;
+        private static bool magicDustSearched;
 
         private ConfigEntry<T> BindConfig<T>(string group, string name, T value, string description, bool synchronizedSetting = true)
         {
@@ -102,8 +123,9 @@ namespace DiscardInventoryItem
             magicDustSoftenerAmount = BindConfig("General", "MagicDustSoftenerAmount", 1, "Magic Dust given by the green-item softener (1 or 2).");
             requireConfirm = BindConfig("General", "RequireConfirm", true, "Show a Yes/No popup with returned parts before recycling.");
 
+            CacheGameApi();
+
             Harmony harmony = new Harmony(Info.Metadata.GUID);
-            harmony.Patch(AccessTools.Method(typeof(InventoryGui), "Update"), postfix: new HarmonyMethod(typeof(InventoryUpdate_Patch), nameof(InventoryUpdate_Patch.Postfix)));
             MethodInfo hide = AccessTools.Method(typeof(InventoryGui), "Hide");
             if (hide != null)
                 harmony.Patch(hide, postfix: new HarmonyMethod(typeof(Hide_Patch), nameof(Hide_Patch.Postfix)));
@@ -116,62 +138,115 @@ namespace DiscardInventoryItem
             PatchTooltipHover(harmony);
         }
 
+        private static void CacheGameApi()
+        {
+            dragItemField = AccessTools.Field(typeof(InventoryGui), "m_dragItem");
+            dragInventoryField = AccessTools.Field(typeof(InventoryGui), "m_dragInventory");
+            dragAmountField = AccessTools.Field(typeof(InventoryGui), "m_dragAmount");
+            dragGoField = AccessTools.Field(typeof(InventoryGui), "m_dragGo");
+            playerGridField = AccessTools.Field(typeof(InventoryGui), "m_playerGrid");
+            containerGridField = AccessTools.Field(typeof(InventoryGui), "m_containerGrid");
+            recipeNameField = AccessTools.Field(typeof(InventoryGui), "m_recipeName");
+            playerNameField = AccessTools.Field(typeof(InventoryGui), "m_playerName");
+            elementsField = AccessTools.Field(typeof(InventoryGrid), "m_elements");
+
+            updateCraftingPanel = CreateOpenDelegate<Action<InventoryGui, bool>>(AccessTools.Method(typeof(InventoryGui), "UpdateCraftingPanel", new Type[] { typeof(bool) }));
+            MethodInfo mouse = AccessTools.DeclaredMethod(typeof(ZInput), "GetMousePosition");
+            if (mouse != null && mouse.ReturnType == typeof(Vector3) && mouse.GetParameters().Length == 0)
+                getMousePosition = CreateOpenDelegate<Func<Vector3>>(mouse);
+            getButtonPos = CreateOpenDelegate<Func<InventoryGrid, GameObject, Vector2i>>(AccessTools.Method(typeof(InventoryGrid), "GetButtonPos", new Type[] { typeof(GameObject) }));
+            getHoveredElement = CreateOpenDelegate<Func<InventoryGrid, InventoryElement>>(AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement"));
+            saveItemDrop = CreateOpenDelegate<Action<ItemDrop>>(AccessTools.Method(typeof(ItemDrop), "Save"));
+        }
+
+        private static T GetObj<T>(FieldInfo field, object instance) where T : class
+        {
+            return field != null && instance != null ? field.GetValue(instance) as T : null;
+        }
+
+        private static T CreateOpenDelegate<T>(MethodInfo method) where T : Delegate
+        {
+            if (method == null)
+                return null;
+            try
+            {
+                return (T)Delegate.CreateDelegate(typeof(T), method);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private static void PatchTooltipHover(Harmony harmony)
         {
             Type tooltipType = AccessTools.TypeByName("UITooltip");
-            if (tooltipType == null)
+            MethodInfo method = tooltipType != null ? AccessTools.Method(tooltipType, "OnPointerEnter") : null;
+            if (method == null)
                 return;
-            foreach (MethodInfo method in AccessTools.GetDeclaredMethods(tooltipType))
-            {
-                if (method.Name != "OnPointerEnter")
-                    continue;
-                harmony.Patch(method, postfix: new HarmonyMethod(typeof(TooltipHover_Patch), nameof(TooltipHover_Patch.Postfix)));
-            }
+            harmony.Patch(method, postfix: new HarmonyMethod(typeof(TooltipHover_Patch), nameof(TooltipHover_Patch.Postfix)));
         }
         private void Start()
         {
-            if (Chainloader.PluginInfos.ContainsKey("randyknapp.mods.epicloot"))
-                epicLootAssembly = Chainloader.PluginInfos["randyknapp.mods.epicloot"].Instance.GetType().Assembly;
+            if (Chainloader.PluginInfos.TryGetValue("randyknapp.mods.epicloot", out PluginInfo epic) && epic.Instance != null)
+            {
+                epicLootAssembly = epic.Instance.GetType().Assembly;
+                CacheEpicLootApi();
+            }
             DismissStuckUnifiedPopup();
         }
 
-        static class InventoryUpdate_Patch
+        private void Update()
         {
-            public static void Postfix(InventoryGui __instance)
+            TickRecycle(InventoryGui.instance);
+        }
+
+        private static void CacheEpicLootApi()
+        {
+            if (epicLootAssembly == null)
+                return;
+            Type ext = epicLootAssembly.GetType("EpicLoot.ItemDataExtensions");
+            Type helper = epicLootAssembly.GetType("EpicLoot.Crafting.EnchantHelper");
+            if (ext != null)
             {
-                if (!modEnabled.Value || Player.m_localPlayer == null)
-                    return;
-
-                if (__instance == null || !InventoryGui.IsVisible())
-                {
-                    ClosePopup();
-                    return;
-                }
-
-                if (popupOpen)
-                {
-                    if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1))
-                        OnConfirmNo();
-                    return;
-                }
-
-                if (!IsRecycleKeyDown())
-                    return;
-
-                if (!TryGetTargetItem(__instance, out ItemDrop.ItemData item, out Inventory inventory, out int amount, out GameObject dragGo))
-                    return;
-
-                if (!TryRecycle(__instance, item, inventory, amount, dragGo, commit: false))
-                    return;
-
-                if (requireConfirm.Value)
-                {
-                    ShowConfirmPopup(__instance, item, inventory, amount, dragGo);
-                    return;
-                }
-
-                TryRecycle(__instance, item, inventory, amount, dragGo, commit: true);
+                epicIsMagic = ext.GetMethod("IsMagic", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(ItemDrop.ItemData) }, null);
+                epicGetRarity = ext.GetMethod("GetRarity", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(ItemDrop.ItemData) }, null);
             }
+            if (helper != null)
+                epicGetEnchantCosts = helper.GetMethod("GetEnchantCosts", BindingFlags.Public | BindingFlags.Static);
+        }
+
+        private static void TickRecycle(InventoryGui instance)
+        {
+            if (!modEnabled.Value)
+                return;
+
+            if (popupOpen)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1))
+                    OnConfirmNo();
+                return;
+            }
+
+            if (!IsRecycleKeyDown())
+                return;
+
+            if (Player.m_localPlayer == null || instance == null || !InventoryGui.IsVisible())
+                return;
+
+            if (!TryGetTargetItem(instance, out ItemDrop.ItemData item, out Inventory inventory, out int amount, out GameObject dragGo))
+                return;
+
+            if (!TryRecycle(instance, item, inventory, amount, dragGo, commit: false))
+                return;
+
+            if (requireConfirm.Value)
+            {
+                ShowConfirmPopup(instance, item, inventory, amount, dragGo);
+                return;
+            }
+
+            TryRecycle(instance, item, inventory, amount, dragGo, commit: true);
         }
 
         static class Hide_Patch
@@ -182,6 +257,7 @@ namespace DiscardInventoryItem
                 pointerGrid = null;
                 pointerItem = null;
                 hoveredTooltip = null;
+                cachedGrids.Clear();
             }
         }
 
@@ -199,12 +275,9 @@ namespace DiscardInventoryItem
             {
                 if (__instance == null || __0 == null)
                     return;
-                MethodInfo getPos = AccessTools.Method(typeof(InventoryGrid), "GetButtonPos", new Type[] { typeof(GameObject) });
-                if (getPos == null)
+                if (getButtonPos == null)
                     return;
-                object raw = getPos.Invoke(__instance, new object[] { __0.gameObject });
-                if (raw is Vector2i)
-                    SetPointerHover(__instance, (Vector2i)raw);
+                SetPointerHover(__instance, getButtonPos(__instance, __0.gameObject));
             }
         }
 
@@ -344,9 +417,9 @@ namespace DiscardInventoryItem
             panelRt.sizeDelta = new Vector2(560f, panelHeight);
             panelRt.anchoredPosition = Vector2.zero;
 
-            TMP_Text textSource = Traverse.Create(gui).Field("m_recipeName").GetValue<TMP_Text>();
+            TMP_Text textSource = GetObj<TMP_Text>(recipeNameField, gui);
             if (textSource == null)
-                textSource = Traverse.Create(gui).Field("m_playerName").GetValue<TMP_Text>();
+                textSource = GetObj<TMP_Text>(playerNameField, gui);
 
             float top = panelHeight * 0.5f - 40f;
             CreateLabel(panel.transform, textSource, title, new Vector2(0f, top), new Vector2(500f, 40f), 24f, FontStyles.Bold, TextAlignmentOptions.Center);
@@ -545,11 +618,10 @@ namespace DiscardInventoryItem
 
         private static bool TryGetTargetItem(InventoryGui gui, out ItemDrop.ItemData item, out Inventory inventory, out int amount, out GameObject dragGo)
         {
-            Traverse t = Traverse.Create(gui);
-            item = t.Field("m_dragItem").GetValue<ItemDrop.ItemData>();
-            inventory = t.Field("m_dragInventory").GetValue<Inventory>();
-            amount = t.Field("m_dragAmount").GetValue<int>();
-            dragGo = t.Field("m_dragGo").GetValue<GameObject>();
+            item = GetObj<ItemDrop.ItemData>(dragItemField, gui);
+            inventory = GetObj<Inventory>(dragInventoryField, gui);
+            amount = dragAmountField != null ? (int)dragAmountField.GetValue(gui) : 0;
+            dragGo = GetObj<GameObject>(dragGoField, gui);
             if (item != null && inventory != null && inventory.ContainsItem(item) && amount > 0)
                 return true;
 
@@ -564,16 +636,18 @@ namespace DiscardInventoryItem
             return false;
         }
 
-        private static InventoryGrid[] GetGrids(InventoryGui gui)
+        private static List<InventoryGrid> GetGrids(InventoryGui gui)
         {
-            List<InventoryGrid> grids = new List<InventoryGrid>();
-            Traverse t = Traverse.Create(gui);
-            AddGrid(grids, t.Field("m_playerGrid").GetValue<InventoryGrid>());
-            AddGrid(grids, t.Field("m_containerGrid").GetValue<InventoryGrid>());
-            InventoryGrid[] found = Resources.FindObjectsOfTypeAll<InventoryGrid>();
+            if (cachedGrids.Count > 0)
+                return cachedGrids;
+
+            AddGrid(cachedGrids, GetObj<InventoryGrid>(playerGridField, gui));
+            AddGrid(cachedGrids, GetObj<InventoryGrid>(containerGridField, gui));
+            AddGrid(cachedGrids, pointerGrid);
+            InventoryGrid[] found = UnityEngine.Object.FindObjectsByType<InventoryGrid>(FindObjectsSortMode.None);
             foreach (InventoryGrid grid in found)
-                AddGrid(grids, grid);
-            return grids.ToArray();
+                AddGrid(cachedGrids, grid);
+            return cachedGrids;
         }
 
         private static void AddGrid(List<InventoryGrid> grids, InventoryGrid grid)
@@ -590,16 +664,6 @@ namespace DiscardInventoryItem
             item = null;
             inventory = null;
             amount = 0;
-            InventoryGrid[] grids = GetGrids(gui);
-
-            if (TryGetItemUnderMouse(grids, out item, out inventory, out amount))
-                return true;
-
-            if (TryGetItemFromTooltip(grids, out item, out inventory, out amount))
-                return true;
-
-            if (TryGetItemFromUiRaycast(grids, out item, out inventory, out amount))
-                return true;
 
             if (pointerItem != null && pointerGrid != null)
             {
@@ -614,15 +678,23 @@ namespace DiscardInventoryItem
                 }
             }
 
+            List<InventoryGrid> grids = GetGrids(gui);
             foreach (InventoryGrid grid in grids)
             {
                 if (TryGetHoveredGridItem(grid, out item, out inventory, out amount))
                     return true;
             }
-            return false;
+
+            if (TryGetItemUnderMouse(grids, out item, out inventory, out amount))
+                return true;
+
+            if (TryGetItemFromTooltip(grids, out item, out inventory, out amount))
+                return true;
+
+            return TryGetItemFromUiRaycast(grids, out item, out inventory, out amount);
         }
 
-        private static bool TryGetItemUnderMouse(InventoryGrid[] grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
+        private static bool TryGetItemUnderMouse(List<InventoryGrid> grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
         {
             item = null;
             inventory = null;
@@ -654,39 +726,6 @@ namespace DiscardInventoryItem
                     }
                 }
 
-                UIInputHandler[] handlers = grid.GetComponentsInChildren<UIInputHandler>(true);
-                foreach (UIInputHandler handler in handlers)
-                {
-                    if (handler == null || !handler.gameObject.activeInHierarchy)
-                        continue;
-                    RectTransform rt = handler.transform as RectTransform;
-                    if (rt == null)
-                        rt = handler.GetComponent<RectTransform>();
-                    if (!IsMouseOverRect(rt, mouse))
-                        continue;
-
-                    Vector2i pos = GetButtonPos(grid, handler.gameObject);
-                    ItemDrop.ItemData hoveredItem = GetItemFromSlot(grid, pos);
-                    if (hoveredItem == null && elements != null)
-                    {
-                        foreach (object raw in elements)
-                        {
-                            InventoryElement element = raw as InventoryElement;
-                            if (element == null)
-                                continue;
-                            if (!HitIsOnElement(handler.gameObject, element))
-                                continue;
-                            hoveredItem = GetItemFromSlot(grid, element.Position);
-                            break;
-                        }
-                    }
-                    if (hoveredItem == null || !gridInv.ContainsItem(hoveredItem))
-                        continue;
-                    item = hoveredItem;
-                    inventory = gridInv;
-                    amount = hoveredItem.m_stack;
-                    return true;
-                }
             }
             return false;
         }
@@ -721,13 +760,12 @@ namespace DiscardInventoryItem
                     cam = root.worldCamera;
             }
 
-            Vector3[] corners = new Vector3[4];
-            rect.GetWorldCorners(corners);
+            rect.GetWorldCorners(worldCorners);
             Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
             Vector2 max = new Vector2(float.MinValue, float.MinValue);
             for (int i = 0; i < 4; i++)
             {
-                Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, corners[i]);
+                Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, worldCorners[i]);
                 min = Vector2.Min(min, screen);
                 max = Vector2.Max(max, screen);
             }
@@ -736,34 +774,9 @@ namespace DiscardInventoryItem
 
         private static Vector2 GetMouseScreenPos()
         {
-            Vector2 mouse = Input.mousePosition;
-            try
-            {
-                MethodInfo method = AccessTools.Method(typeof(ZInput), "GetMousePosition");
-                if (method != null)
-                {
-                    object raw = method.Invoke(null, null);
-                    if (raw is Vector3 v3)
-                        return v3;
-                    if (raw is Vector2 v2)
-                        return v2;
-                }
-            }
-            catch
-            {
-            }
-            return mouse;
-        }
-
-        private static Vector2i GetButtonPos(InventoryGrid grid, GameObject go)
-        {
-            MethodInfo getPos = AccessTools.Method(typeof(InventoryGrid), "GetButtonPos", new Type[] { typeof(GameObject) });
-            if (getPos == null || go == null)
-                return new Vector2i(-1, -1);
-            object raw = getPos.Invoke(grid, new object[] { go });
-            if (raw is Vector2i)
-                return (Vector2i)raw;
-            return new Vector2i(-1, -1);
+            if (getMousePosition != null)
+                return getMousePosition();
+            return Input.mousePosition;
         }
 
         private static ItemDrop.ItemData GetItemFromSlot(InventoryGrid grid, Vector2i pos)
@@ -779,7 +792,7 @@ namespace DiscardInventoryItem
             return inv.GetItemAt(pos.x, pos.y);
         }
 
-        private static bool TryGetItemFromTooltip(InventoryGrid[] grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
+        private static bool TryGetItemFromTooltip(List<InventoryGrid> grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
         {
             item = null;
             inventory = null;
@@ -801,7 +814,7 @@ namespace DiscardInventoryItem
                     InventoryElement element = raw as InventoryElement;
                     if (element == null)
                         continue;
-                    Component tip = Traverse.Create(element).Field("m_tooltip").GetValue() as Component;
+                    Component tip = element.m_tooltip;
                     if (tip == null)
                         continue;
                     if (tip != hoveredTooltip && tip.gameObject != tipGo)
@@ -818,7 +831,7 @@ namespace DiscardInventoryItem
             return false;
         }
 
-        private static bool TryGetItemFromUiRaycast(InventoryGrid[] grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
+        private static bool TryGetItemFromUiRaycast(List<InventoryGrid> grids, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
         {
             item = null;
             inventory = null;
@@ -828,13 +841,13 @@ namespace DiscardInventoryItem
                 return false;
 
             PointerEventData pointer = new PointerEventData(eventSystem);
-            pointer.position = Input.mousePosition;
-            List<RaycastResult> hits = new List<RaycastResult>();
-            eventSystem.RaycastAll(pointer, hits);
-            if (hits.Count == 0)
+            pointer.position = GetMouseScreenPos();
+            raycastHits.Clear();
+            eventSystem.RaycastAll(pointer, raycastHits);
+            if (raycastHits.Count == 0)
                 return false;
 
-            foreach (RaycastResult hit in hits)
+            foreach (RaycastResult hit in raycastHits)
             {
                 if (hit.gameObject == null)
                     continue;
@@ -903,12 +916,9 @@ namespace DiscardInventoryItem
 
         private static IList GetGridElements(InventoryGrid grid)
         {
-            if (grid == null)
+            if (grid == null || elementsField == null)
                 return null;
-            FieldInfo field = AccessTools.Field(typeof(InventoryGrid), "m_elements");
-            if (field == null)
-                return null;
-            return field.GetValue(grid) as IList;
+            return elementsField.GetValue(grid) as IList;
         }
 
         private static bool TryGetHoveredGridItem(InventoryGrid grid, out ItemDrop.ItemData item, out Inventory inventory, out int amount)
@@ -923,10 +933,7 @@ namespace DiscardInventoryItem
             if (gridInv == null)
                 return false;
 
-            InventoryElement hovered = null;
-            MethodInfo getHovered = AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement");
-            if (getHovered != null)
-                hovered = getHovered.Invoke(grid, null) as InventoryElement;
+            InventoryElement hovered = getHoveredElement != null ? getHoveredElement(grid) : null;
             if (hovered != null)
             {
                 ItemDrop.ItemData hoveredItem = grid.GetItem(hovered.Position);
@@ -1023,22 +1030,24 @@ namespace DiscardInventoryItem
                 return false;
             }
 
-            List<Piece.Requirement> reqs = recipe.m_resources.ToList();
+            Piece.Requirement[] reqs = recipe.m_resources;
             bool isMagic = false;
-            if (epicLootAssembly != null && returnEnchantedResources.Value)
-                isMagic = (bool)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("IsMagic", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(ItemDrop.ItemData) }, null).Invoke(null, new[] { dragItem });
+            if (epicIsMagic != null && returnEnchantedResources.Value)
+                isMagic = (bool)epicIsMagic.Invoke(null, new object[] { dragItem });
 
             List<KeyValuePair<ItemDrop, int>> magicReqs = null;
             bool scaleEnchantReturns = false;
             if (isMagic)
             {
-                int rarity = (int)epicLootAssembly.GetType("EpicLoot.ItemDataExtensions").GetMethod("GetRarity", BindingFlags.Public | BindingFlags.Static).Invoke(null, new[] { dragItem });
+                int rarity = epicGetRarity != null ? (int)epicGetRarity.Invoke(null, new object[] { dragItem }) : 0;
                 int returnRarity = rarity;
                 if (downgradeEnchantRarity.Value)
                     returnRarity = rarity <= 0 ? -1 : rarity - 1;
                 if (returnRarity >= 0)
                 {
-                    magicReqs = (List<KeyValuePair<ItemDrop, int>>)epicLootAssembly.GetType("EpicLoot.Crafting.EnchantHelper").GetMethod("GetEnchantCosts", BindingFlags.Public | BindingFlags.Static).Invoke(null, new object[] { dragItem, returnRarity });
+                    magicReqs = epicGetEnchantCosts != null
+                        ? (List<KeyValuePair<ItemDrop, int>>)epicGetEnchantCosts.Invoke(null, new object[] { dragItem, returnRarity })
+                        : null;
                     scaleEnchantReturns = true;
                 }
                 else if (magicDustSoftener.Value)
@@ -1047,11 +1056,12 @@ namespace DiscardInventoryItem
 
             if (recipe.m_amount > 0 && dragAmount / recipe.m_amount > 0)
             {
-                reqs.RemoveAll(ShouldSkipReturnedResource);
                 for (int i = 0; i < dragAmount / recipe.m_amount; i++)
                 {
                     foreach (Piece.Requirement req in reqs)
                     {
+                        if (ShouldSkipReturnedResource(req))
+                            continue;
                         int quality = dragItem.m_quality;
                         for (int j = quality; j > 0; j--)
                             QueueRequirement(req, Mathf.RoundToInt(req.GetAmount(j) * returnResources.Value), commit);
@@ -1088,7 +1098,8 @@ namespace DiscardInventoryItem
             if (dragGo != null)
                 UnityEngine.Object.Destroy(dragGo);
 
-            instance.GetType().GetMethod("UpdateCraftingPanel", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(instance, new object[] { false });
+            if (updateCraftingPanel != null)
+                updateCraftingPanel(instance, false);
             return true;
         }
 
@@ -1109,8 +1120,11 @@ namespace DiscardInventoryItem
 
         private static ItemDrop FindMagicDust()
         {
+            if (magicDustSearched)
+                return cachedMagicDust;
             if (ObjectDB.instance == null)
                 return null;
+            magicDustSearched = true;
 
             string[] names = { "DustMagic", "MagicDust", "dust_magic" };
             foreach (string name in names)
@@ -1120,7 +1134,7 @@ namespace DiscardInventoryItem
                     continue;
                 ItemDrop drop = prefab.GetComponent<ItemDrop>();
                 if (drop != null)
-                    return drop;
+                    return cachedMagicDust = drop;
             }
 
             foreach (GameObject prefab in ObjectDB.instance.m_items)
@@ -1132,9 +1146,9 @@ namespace DiscardInventoryItem
                 string prefabName = prefab.name ?? "";
                 if (shared.IndexOf("dust", StringComparison.OrdinalIgnoreCase) >= 0
                     && (shared.IndexOf("magic", StringComparison.OrdinalIgnoreCase) >= 0 || prefabName.IndexOf("DustMagic", StringComparison.OrdinalIgnoreCase) >= 0))
-                    return drop;
+                    return cachedMagicDust = drop;
                 if (prefabName.Equals("DustMagic", StringComparison.OrdinalIgnoreCase))
-                    return drop;
+                    return cachedMagicDust = drop;
             }
             return null;
         }
@@ -1174,7 +1188,8 @@ namespace DiscardInventoryItem
                     component.m_itemData = newItem;
                     component.m_itemData.m_dropPrefab = prefab;
                     component.m_itemData.m_stack = stack;
-                    Traverse.Create(component).Method("Save").GetValue();
+                    if (saveItemDrop != null)
+                        saveItemDrop(component);
                 }
             }
         }

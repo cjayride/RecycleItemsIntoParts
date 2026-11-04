@@ -1,3 +1,14 @@
+# v1.8.9
+- Fixed startup crash (Harmony FieldRefAccess ArgumentNullException)
+
+# v1.8.8
+- Rechecked against Valheim 1.0.21 (Steam build 26249040)
+- Removed the Harmony postfix on InventoryGui.Update (hot path); recycle uses the plugin Update instead
+- Faster inventory tick: Delete is checked before any inventory work
+- Cached Valheim/EpicLoot field and method lookups instead of reflecting every recycle
+- Hovered slot is used first; expensive grid scans run only as fallback
+- Magic Dust lookup and inventory grids are cached while the inventory is open
+
 # v1.8.7
 - Verified against Valheim 1.0.21 (Release build, Steam build 26249040).
 - Updated BepInExPack dependency to 5.4.2360

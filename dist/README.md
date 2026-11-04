@@ -131,4 +131,4 @@ For CJAYCRAFT, use the server settings listed above.
 
 ## 🤖 Development
 
-The code was **not AI-generated**. AI was used to help verify compatibility with Valheim 1.0.
+The code was **not AI-generated**. AI was used to help verify compatibility with Valheim 1.0.21.

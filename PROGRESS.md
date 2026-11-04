@@ -1,19 +1,22 @@
-# RecycleItemsIntoParts — Valheim 1.0.21 release
+# RecycleItemsIntoParts — 1.8.9 startup crash fix
 
 ## Goal
-- Verify Release build against Valheim 1.0.21, update BepInExPack to 5.4.2360, changelog, Thunderstore `/dist` zip, git tag `v1.8.7`.
+- Fix ArgumentNullException in CacheGameApi / Harmony FieldRefAccess on load.
 
 ## Status
-- Completed (pending git push/tag)
+- Completed
 
-## Changes
-- Version 1.8.7: manifest BepInEx `denikson-BepInExPack_Valheim-5.4.2360`, changelog, README compatibility note.
-- `dist/` staged for Thunderstore (DLL, manifest, README, CHANGELOG, icon); zip `cjayride-RecycleItemsIntoParts-1.8.7.zip`.
+## Cause
+- Harmony FieldRefAccess throws if the typed field lookup returns null. That ran in Awake and aborted the plugin.
+
+## Fix
+- Cache FieldInfo with AccessTools.Field (same approach as 1.8.7) instead of FieldRefAccess.
+- Missing fields skip instead of crashing.
 
 ## Build
-- `dotnet build RecycleItemsIntoParts.sln -c Release -p:GamePath=D:\SteamLibrary\steamapps\common\Valheim` — succeeded (0 errors, existing warnings).
-- Valheim Steam buildid: 26249040 (1.0.21).
+- Release build succeeded (0 errors).
 - DLL: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\RecycleItemsIntoParts\bin\Release\net480\RecycleItemsIntoParts.dll`
+- Zip: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\dist\cjayride-RecycleItemsIntoParts-1.8.9.zip`
 
 ## Next
-- Commit, push, tag `v1.8.7` on GitHub.
+- Replace 1.8.8 with 1.8.9 and confirm BepInEx loads the plugin.
