@@ -17,7 +17,7 @@ A fork of [DiscardInventoryItem by aedenthorn](https://github.com/aedenthorn/Val
 3. Review the materials you'll receive.
 4. Click **Yes** to recycle or **No** to cancel.
 
-Press **Escape** or right-click to cancel, too.
+Press **Enter** to confirm, or **Escape** / right-click to cancel.
 
 ## ✨ What Can Be Recycled?
 

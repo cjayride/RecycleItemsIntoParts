@@ -1,3 +1,6 @@
+# v1.8.10
+- Recycle confirm window: Enter confirms Yes, Escape cancels (inventory stays open)
+
 # v1.8.9
 - Fixed startup crash (Harmony FieldRefAccess ArgumentNullException)
 

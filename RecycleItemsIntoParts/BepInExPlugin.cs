@@ -15,14 +15,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.9")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.10")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = false;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.9",
+            CurrentVersion = "1.8.10",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -58,6 +58,8 @@ namespace DiscardInventoryItem
         private static int pendingAmount;
         private static GameObject pendingDragGo;
         private static bool popupOpen;
+        private static bool popupCanConfirm;
+        private static int suppressInventoryHideFrame = -1;
         private static GameObject confirmRoot;
         private static InventoryGrid pointerGrid;
         private static Vector2i pointerPos;
@@ -128,7 +130,9 @@ namespace DiscardInventoryItem
             Harmony harmony = new Harmony(Info.Metadata.GUID);
             MethodInfo hide = AccessTools.Method(typeof(InventoryGui), "Hide");
             if (hide != null)
-                harmony.Patch(hide, postfix: new HarmonyMethod(typeof(Hide_Patch), nameof(Hide_Patch.Postfix)));
+                harmony.Patch(hide,
+                    prefix: new HarmonyMethod(typeof(Hide_Patch), nameof(Hide_Patch.Prefix)),
+                    postfix: new HarmonyMethod(typeof(Hide_Patch), nameof(Hide_Patch.Postfix)));
             MethodInfo enterGui = AccessTools.Method(typeof(InventoryGui), "OnEnterElement");
             if (enterGui != null)
                 harmony.Patch(enterGui, postfix: new HarmonyMethod(typeof(OnEnterElement_Patch), nameof(OnEnterElement_Patch.Postfix)));
@@ -223,8 +227,7 @@ namespace DiscardInventoryItem
 
             if (popupOpen)
             {
-                if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1))
-                    OnConfirmNo();
+                TickPopupKeys();
                 return;
             }
 
@@ -249,8 +252,50 @@ namespace DiscardInventoryItem
             TryRecycle(instance, item, inventory, amount, dragGo, commit: true);
         }
 
+        private static bool IsCancelKeyDown()
+        {
+            return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Mouse1);
+        }
+
+        private static bool IsConfirmKeyDown()
+        {
+            return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
+        }
+
+        private static void TickPopupKeys()
+        {
+            if (IsCancelKeyDown())
+            {
+                if (Input.GetKeyDown(KeyCode.Escape))
+                    suppressInventoryHideFrame = Time.frameCount;
+                OnConfirmNo();
+                return;
+            }
+
+            if (!IsConfirmKeyDown())
+                return;
+
+            if (popupCanConfirm)
+                OnConfirmYes();
+            else
+                OnConfirmNo();
+        }
+
         static class Hide_Patch
         {
+            public static bool Prefix()
+            {
+                if (Time.frameCount == suppressInventoryHideFrame)
+                    return false;
+                if (popupOpen && Input.GetKeyDown(KeyCode.Escape))
+                {
+                    suppressInventoryHideFrame = Time.frameCount;
+                    OnConfirmNo();
+                    return false;
+                }
+                return true;
+            }
+
             public static void Postfix()
             {
                 ClosePopup();
@@ -327,6 +372,7 @@ namespace DiscardInventoryItem
         {
             DestroyConfirmUi();
             popupOpen = false;
+            popupCanConfirm = false;
             pendingGui = null;
             pendingItem = null;
             pendingInventory = null;
@@ -374,6 +420,7 @@ namespace DiscardInventoryItem
             Canvas parentCanvas = gui.GetComponentInParent<Canvas>();
             Transform parent = parentCanvas != null ? parentCanvas.transform : gui.transform;
 
+            popupCanConfirm = canConfirm;
             confirmRoot = new GameObject("RecycleConfirm", typeof(RectTransform), typeof(Canvas), typeof(CanvasGroup), typeof(GraphicRaycaster));
             confirmRoot.transform.SetParent(parent, false);
             Canvas canvas = confirmRoot.GetComponent<Canvas>();

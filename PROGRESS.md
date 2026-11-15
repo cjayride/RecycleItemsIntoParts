@@ -1,22 +1,23 @@
-# RecycleItemsIntoParts — 1.8.9 startup crash fix
+# RecycleItemsIntoParts — 1.8.10 keyboard confirm
 
 ## Goal
-- Fix ArgumentNullException in CacheGameApi / Harmony FieldRefAccess on load.
+- Enter confirms recycle Yes; Escape cancels No without closing inventory.
 
 ## Status
 - Completed
 
-## Cause
-- Harmony FieldRefAccess throws if the typed field lookup returns null. That ran in Awake and aborted the plugin.
-
-## Fix
-- Cache FieldInfo with AccessTools.Field (same approach as 1.8.7) instead of FieldRefAccess.
-- Missing fields skip instead of crashing.
+## Changes
+- TickPopupKeys: Return/KeypadEnter = Yes (OK on blocked popup); Escape/right-click = No
+- InventoryGui.Hide prefix: Escape on the confirm window does not close inventory
+- Version 1.8.10
 
 ## Build
-- Release build succeeded (0 errors).
-- DLL: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\RecycleItemsIntoParts\bin\Release\net480\RecycleItemsIntoParts.dll`
-- Zip: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\dist\cjayride-RecycleItemsIntoParts-1.8.9.zip`
+- Release: 0 errors
+- DLL: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\RecycleItemsIntoParts\bin\Release\net480\RecycleItemsIntoParts.dll` (FileVersion 1.8.10)
+- Zip: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\dist\cjayride-RecycleItemsIntoParts-1.8.10.zip` (flat: manifest.json, icon.png, README.md, CHANGELOG.md, RecycleItemsIntoParts.dll)
+
+## Testing
+- Not in-game. Compile succeeded.
 
 ## Next
-- Replace 1.8.8 with 1.8.9 and confirm BepInEx loads the plugin.
+- In-game: Delete item, Enter to recycle, Escape to cancel with inventory still open
