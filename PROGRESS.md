@@ -1,23 +1,20 @@
-# RecycleItemsIntoParts — 1.8.10 keyboard confirm
+# RecycleItemsIntoParts — 1.8.11 skip disabled recipes
 
 ## Goal
-- Enter confirms recycle Yes; Escape cancels No without closing inventory.
+- Recycle of uncraftable items (EpicLoot `m_enabled=false` recipes, e.g. Silver Ring / Winter Band) must not return craft mats (silver, tin, leftover coins). Magic items still return enchant materials.
 
 ## Status
-- Completed
+- Completed (compile + zip). Not in-game tested.
 
 ## Changes
-- TickPopupKeys: Return/KeypadEnter = Yes (OK on blocked popup); Escape/right-click = No
-- InventoryGui.Hide prefix: Escape on the confirm window does not close inventory
-- Version 1.8.10
+- TryRecycle: ignore recipes with `!m_enabled` for craft-mat returns; still return enchant mats
+- EpicLoot leftover `SilverRing-recipe` set to `Silver,1,0` in pack cfgs (earlier)
+- Version 1.8.11; pack manifests + changelogs
 
 ## Build
-- Release: 0 errors
-- DLL: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\RecycleItemsIntoParts\bin\Release\net480\RecycleItemsIntoParts.dll` (FileVersion 1.8.10)
-- Zip: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\dist\cjayride-RecycleItemsIntoParts-1.8.10.zip` (flat: manifest.json, icon.png, README.md, CHANGELOG.md, RecycleItemsIntoParts.dll)
-
-## Testing
-- Not in-game. Compile succeeded.
+- `dotnet build` Release: 0 errors
+- DLL: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\RecycleItemsIntoParts\bin\Release\net480\RecycleItemsIntoParts.dll` FileVersion 1.8.11
+- Zip: `D:\AI-Agent-Projects\cjaycraft\Cjayride.RecycleItemsIntoParts\dist\cjayride-RecycleItemsIntoParts-1.8.11.zip` (flat root)
 
 ## Next
-- In-game: Delete item, Enter to recycle, Escape to cancel with inventory still open
+- In-game recycle Winter Band: no silver/tin/coins; only downgraded enchant mats if magic

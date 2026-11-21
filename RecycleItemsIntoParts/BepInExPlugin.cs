@@ -15,14 +15,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.10")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.11")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = false;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.10",
+            CurrentVersion = "1.8.11",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -1055,7 +1055,8 @@ namespace DiscardInventoryItem
             Dbgl($"Discarding {dragAmount}/{dragItem.m_stack} {dragItem.m_dropPrefab?.name}");
 
             Recipe recipe = ObjectDB.instance.GetRecipe(dragItem);
-            if (recipe == null || (!returnUnknownResources.Value && !Player.m_localPlayer.IsRecipeKnown(dragItem.m_shared.m_name)))
+            bool craftEnabled = recipe != null && recipe.m_enabled;
+            if (craftEnabled && !returnUnknownResources.Value && !Player.m_localPlayer.IsRecipeKnown(dragItem.m_shared.m_name))
             {
                 if (commit)
                     Dbgl("Cannot recycle " + recycledName + " (unknown recipe).");
@@ -1064,8 +1065,10 @@ namespace DiscardInventoryItem
                 return false;
             }
 
-            bool foundShards = recipe.m_item?.m_itemData?.m_shared?.m_name == "Magic $mod_epicloot_assets_shard";
-            bool foundConsumable = recipe.m_item?.m_itemData?.m_shared?.m_itemType.ToString() == "Consumable";
+            string itemSharedName = dragItem.m_shared?.m_name ?? "";
+            bool foundShards = itemSharedName.IndexOf("shard", StringComparison.OrdinalIgnoreCase) >= 0
+                || recipe?.m_item?.m_itemData?.m_shared?.m_name == "Magic $mod_epicloot_assets_shard";
+            bool foundConsumable = dragItem.m_shared != null && dragItem.m_shared.m_itemType.ToString() == "Consumable";
             if (foundShards && !recycleShards.Value)
             {
                 ShowBlockedPopup("Cannot recycle", "Shards cannot be recycled.");
@@ -1077,11 +1080,20 @@ namespace DiscardInventoryItem
                 return false;
             }
 
-            Piece.Requirement[] reqs = recipe.m_resources;
             bool isMagic = false;
             if (epicIsMagic != null && returnEnchantedResources.Value)
                 isMagic = (bool)epicIsMagic.Invoke(null, new object[] { dragItem });
 
+            if (!craftEnabled && !isMagic)
+            {
+                if (commit)
+                    Dbgl("Cannot recycle " + recycledName + " (no enabled recipe).");
+                else
+                    ShowBlockedPopup("Cannot recycle", recycledName + " has no crafting recipe.");
+                return false;
+            }
+
+            Piece.Requirement[] reqs = craftEnabled ? recipe.m_resources : Array.Empty<Piece.Requirement>();
             List<KeyValuePair<ItemDrop, int>> magicReqs = null;
             bool scaleEnchantReturns = false;
             if (isMagic)
@@ -1101,9 +1113,23 @@ namespace DiscardInventoryItem
                     magicReqs = GetMagicDustSoftenerReqs();
             }
 
-            if (recipe.m_amount > 0 && dragAmount / recipe.m_amount > 0)
+            int copies = 1;
+            if (craftEnabled && recipe.m_amount > 0)
+                copies = dragAmount / recipe.m_amount;
+            else
+                copies = Math.Max(1, dragAmount);
+            if (copies <= 0)
             {
-                for (int i = 0; i < dragAmount / recipe.m_amount; i++)
+                if (commit)
+                    Dbgl("Cannot recycle " + recycledName + " (recipe amount).");
+                else
+                    ShowBlockedPopup("Cannot recycle", recycledName + " has no crafting recipe.");
+                return false;
+            }
+
+            for (int i = 0; i < copies; i++)
+            {
+                if (craftEnabled)
                 {
                     foreach (Piece.Requirement req in reqs)
                     {
@@ -1113,19 +1139,19 @@ namespace DiscardInventoryItem
                         for (int j = quality; j > 0; j--)
                             QueueRequirement(req, Mathf.RoundToInt(req.GetAmount(j) * returnResources.Value), commit);
                     }
-                    if (magicReqs != null)
+                }
+                if (magicReqs != null)
+                {
+                    foreach (var kvp in magicReqs)
                     {
-                        foreach (var kvp in magicReqs)
-                        {
-                            if (kvp.Key?.m_itemData?.m_shared == null)
-                                continue;
-                            if (kvp.Key.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value)
-                                continue;
-                            int give = scaleEnchantReturns
-                                ? Mathf.RoundToInt(kvp.Value * returnResourcesMagic.Value)
-                                : kvp.Value;
-                            QueueRequirement(new Piece.Requirement() { m_amount = kvp.Value, m_resItem = kvp.Key }, give, commit);
-                        }
+                        if (kvp.Key?.m_itemData?.m_shared == null)
+                            continue;
+                        if (kvp.Key.m_itemData.m_shared.m_name == "$item_coins" && !recycleCoins.Value)
+                            continue;
+                        int give = scaleEnchantReturns
+                            ? Mathf.RoundToInt(kvp.Value * returnResourcesMagic.Value)
+                            : kvp.Value;
+                        QueueRequirement(new Piece.Requirement() { m_amount = kvp.Value, m_resItem = kvp.Key }, give, commit);
                     }
                 }
             }

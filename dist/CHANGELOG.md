@@ -1,3 +1,6 @@
+# v1.8.11
+- Disabled recipes (`m_enabled` false, e.g. EpicLoot Silver Ring with craftable off) no longer return craft mats. Magic items still return enchant materials.
+
 # v1.8.10
 - Recycle confirm window: Enter confirms Yes, Escape cancels (inventory stays open)
 
