@@ -15,14 +15,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.11")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.12")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = false;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.11",
+            CurrentVersion = "1.8.12",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -30,6 +30,7 @@ namespace DiscardInventoryItem
         public static ConfigEntry<bool> modEnabled;
         public static ConfigEntry<bool> serverEnforced;
         public static ConfigEntry<bool> returnUnknownResources;
+        public static ConfigEntry<bool> returnUndiscoveredMaterials;
         public static ConfigEntry<bool> returnEnchantedResources;
         public static ConfigEntry<float> returnResources;
         public static ConfigEntry<float> returnResourcesMagic;
@@ -113,6 +114,7 @@ namespace DiscardInventoryItem
             RefreshRecycleKeyCode();
             modEnabled = BindConfig("General", "Enabled", true, "Enable this mod");
             returnUnknownResources = BindConfig("General", "ReturnUnknownResources", true, "Return resources if recipe is unknown");
+            returnUndiscoveredMaterials = BindConfig("General", "ReturnUndiscoveredMaterials", false, "If false, skip returned mats the player has never discovered (IsKnownMaterial).");
             returnEnchantedResources = BindConfig("General", "ReturnEnchantedResources", true, "Return resources for Epic Loot enchantments");
             returnResources = BindConfig("General", "ReturnResources", 0.40f, "Fraction of craft materials to return (0.0 - 1.0). 0.40 means 1 wood returns 0, 3 wood returns 1.");
             returnResourcesMagic = BindConfig("General", "ReturnResourcesMagic", 0.40f, "Fraction of EpicLoot enchant materials to return after the rarity drop (0.0 - 1.0). 5 Magic Dust at 0.40 returns 2.");
@@ -1230,6 +1232,13 @@ namespace DiscardInventoryItem
         {
             if (numToAdd <= 0 || req?.m_resItem?.m_itemData?.m_shared == null)
                 return;
+
+            if (!returnUndiscoveredMaterials.Value)
+            {
+                Player player = Player.m_localPlayer;
+                if (player == null || !player.IsKnownMaterial(req.m_resItem.m_itemData.m_shared.m_name))
+                    return;
+            }
 
             GameObject prefab = GetRequirementPrefab(req);
             if (prefab == null)

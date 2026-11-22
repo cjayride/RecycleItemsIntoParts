@@ -1,3 +1,6 @@
+# v1.8.12
+- Recycle no longer returns materials the player has never discovered (`IsKnownMaterial`). Toggle: `ReturnUndiscoveredMaterials` (default false).
+
 # v1.8.11
 - Disabled recipes (`m_enabled` false, e.g. EpicLoot Silver Ring with craftable off) no longer return craft mats. Magic items still return enchant materials.
 
