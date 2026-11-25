@@ -15,14 +15,14 @@ using TMPro;
 
 namespace DiscardInventoryItem
 {
-    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.12")]
+    [BepInPlugin("cjayride.RecycleItemsIntoParts", "Recycle Items Into Parts", "1.8.13")]
     public class BepInExPlugin: BaseUnityPlugin
     {
         private static readonly bool isDebug = false;
         internal static ConfigSync configSync = new ConfigSync("cjayride.RecycleItemsIntoParts")
         {
             DisplayName = "Recycle Items Into Parts",
-            CurrentVersion = "1.8.12",
+            CurrentVersion = "1.8.13",
             MinimumRequiredVersion = "1.7.6"
         };
 
@@ -157,12 +157,69 @@ namespace DiscardInventoryItem
             elementsField = AccessTools.Field(typeof(InventoryGrid), "m_elements");
 
             updateCraftingPanel = CreateOpenDelegate<Action<InventoryGui, bool>>(AccessTools.Method(typeof(InventoryGui), "UpdateCraftingPanel", new Type[] { typeof(bool) }));
-            MethodInfo mouse = AccessTools.DeclaredMethod(typeof(ZInput), "GetMousePosition");
-            if (mouse != null && mouse.ReturnType == typeof(Vector3) && mouse.GetParameters().Length == 0)
-                getMousePosition = CreateOpenDelegate<Func<Vector3>>(mouse);
+            CacheMousePositionApi();
             getButtonPos = CreateOpenDelegate<Func<InventoryGrid, GameObject, Vector2i>>(AccessTools.Method(typeof(InventoryGrid), "GetButtonPos", new Type[] { typeof(GameObject) }));
             getHoveredElement = CreateOpenDelegate<Func<InventoryGrid, InventoryElement>>(AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement"));
             saveItemDrop = CreateOpenDelegate<Action<ItemDrop>>(AccessTools.Method(typeof(ItemDrop), "Save"));
+        }
+
+        private static void CacheMousePositionApi()
+        {
+            const BindingFlags declared = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+            PropertyInfo pointer = typeof(ZInput).GetProperty("pointerPosition", declared);
+            if (pointer != null && TryBindMousePosition(pointer.GetGetMethod(true)))
+                return;
+
+            MethodInfo mouse = typeof(ZInput).GetMethod("GetMousePosition", declared, null, Type.EmptyTypes, null);
+            if (TryBindMousePosition(mouse))
+                return;
+
+            CacheInputSystemMouseFallback();
+        }
+
+        private static bool TryBindMousePosition(MethodInfo method)
+        {
+            if (method == null || method.GetParameters().Length != 0)
+                return false;
+            if (method.ReturnType == typeof(Vector3))
+            {
+                getMousePosition = CreateOpenDelegate<Func<Vector3>>(method);
+                return getMousePosition != null;
+            }
+            if (method.ReturnType == typeof(Vector2))
+            {
+                Func<Vector2> get2 = CreateOpenDelegate<Func<Vector2>>(method);
+                if (get2 == null)
+                    return false;
+                getMousePosition = () => get2();
+                return true;
+            }
+            return false;
+        }
+
+        private static void CacheInputSystemMouseFallback()
+        {
+            Type mouseType = AccessTools.TypeByName("UnityEngine.InputSystem.Mouse");
+            PropertyInfo currentProp = mouseType != null ? AccessTools.Property(mouseType, "current") : null;
+            PropertyInfo positionProp = mouseType != null ? AccessTools.Property(mouseType, "position") : null;
+            MethodInfo readValue = positionProp != null ? AccessTools.Method(positionProp.PropertyType, "ReadValue") : null;
+            if (currentProp == null || positionProp == null || readValue == null)
+                return;
+            getMousePosition = () =>
+            {
+                object current = currentProp.GetValue(null, null);
+                if (current == null)
+                    return Input.mousePosition;
+                object control = positionProp.GetValue(current, null);
+                if (control == null)
+                    return Input.mousePosition;
+                object value = readValue.Invoke(control, null);
+                if (value is Vector2 v2)
+                    return v2;
+                if (value is Vector3 v3)
+                    return v3;
+                return Input.mousePosition;
+            };
         }
 
         private static T GetObj<T>(FieldInfo field, object instance) where T : class
@@ -1012,7 +1069,7 @@ namespace DiscardInventoryItem
             if (elements == null)
                 return false;
 
-            Vector2 mouse = Input.mousePosition;
+            Vector2 mouse = GetMouseScreenPos();
             foreach (object raw in elements)
             {
                 InventoryElement element = raw as InventoryElement;

@@ -1,3 +1,7 @@
+# v1.8.13
+- Valheim 1.0.30: use `ZInput.pointerPosition` when `ZInput.GetMousePosition` is gone (legacy method still used on older builds)
+- Mouse position lookup uses reflection only (no Harmony `AccessTools` for optional members), so no HarmonyX warning on load
+
 # v1.8.12
 - Recycle no longer returns materials the player has never discovered (`IsKnownMaterial`). Toggle: `ReturnUndiscoveredMaterials` (default false).
 
